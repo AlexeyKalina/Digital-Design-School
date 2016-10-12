@@ -48,13 +48,19 @@ namespace InstagramKiller.DataLayer.Sql
                     command.Parameters.AddWithValue("@id", id);
                     using (var reader = command.ExecuteReader())
                     {
-                        reader.Read();
-                        return new User
+                        if (reader.Read())
                         {
-                            Id = reader.GetGuid(0),
-                            Login = reader.GetString(1),
-                            Password = reader.GetString(2)
-                        };
+                            return new User
+                            {
+                                Id = reader.GetGuid(0),
+                                Login = reader.GetString(1),
+                                Password = reader.GetString(2)
+                            };
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
@@ -89,14 +95,20 @@ namespace InstagramKiller.DataLayer.Sql
                     command.Parameters.AddWithValue("@id", postId);
                     using (var reader = command.ExecuteReader())
                     {
-                        reader.Read();
-                        return new Post
+                        if (reader.Read())
                         {
-                            Id = reader.GetGuid(0),
-                            Photo = (byte[])reader["photo"],
-                            Date = reader.GetDateTime(2),
-                            UserId = reader.GetGuid(3)
-                        };
+                            return new Post
+                            {
+                                Id = reader.GetGuid(0),
+                                Photo = (byte[])reader["photo"],
+                                Date = reader.GetDateTime(2),
+                                UserId = reader.GetGuid(3)
+                            };
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
@@ -132,54 +144,169 @@ namespace InstagramKiller.DataLayer.Sql
                     command.Parameters.AddWithValue("@id", commentId);
                     using (var reader = command.ExecuteReader())
                     {
-                        reader.Read();
-                        return new Comment
+                        if (reader.Read())
                         {
-                            Id = reader.GetGuid(0),
-                            Text = reader.GetString(1),
-                            UserId = reader.GetGuid(2),
-                            PostId = reader.GetGuid(3),
-                            Date = reader.GetDateTime(4)
-                        };
+                            return new Comment
+                            {
+                                Id = reader.GetGuid(0),
+                                Text = reader.GetString(1),
+                                UserId = reader.GetGuid(2),
+                                PostId = reader.GetGuid(3),
+                                Date = reader.GetDateTime(4)
+                            };
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
         }
-        public bool AddLikeToPost(User user, Post post)
+        public void DeleteUser(User user)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM comments WHERE user_id = @id OR post_id IN (SELECT id FROM posts WHERE user_id = @id);
+                                            DELETE FROM hashtags_posts WHERE post_id IN (SELECT id FROM posts WHERE user_id = @id);
+                                            DELETE FROM likes WHERE user_id = @id OR post_id IN (SELECT id FROM posts WHERE user_id = @id);
+                                            DELETE FROM posts WHERE user_id = @id;
+                                            DELETE FROM users WHERE id = @id";
+                    command.Parameters.AddWithValue("@id", user.Id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public void DeletePost(Post post)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM comments WHERE post_id = @id;
+                                            DELETE FROM hashtags_posts WHERE post_id = @id;
+                                            DELETE FROM likes WHERE post_id = @id;
+                                            DELETE FROM posts WHERE id = @id;";
+                    command.Parameters.AddWithValue("@id", post.Id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public void DeleteComment(Comment comment)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "DELETE FROM comments WHERE id = @id";
+                    command.Parameters.AddWithValue("@id", comment.Id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public List<Comment> GetPostComments(Post post)
+        {
+            List<Comment> comments = new List<Comment>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE post_id = @id";
+                    command.Parameters.AddWithValue("@id", post.Id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            comments.Add(new Comment
+                            {
+                                Id = reader.GetGuid(0),
+                                Text = reader.GetString(1),
+                                UserId = reader.GetGuid(2),
+                                PostId = reader.GetGuid(3),
+                                Date = reader.GetDateTime(4)
+                            });
+                        }
+                        return comments;
+                    }
+                }
+            }
+        }
+        public List<Post> GetLatestPosts(int count)
+        {
+            List<Post> posts = new List<Post>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT TOP(@count) id, photo, date, user_id FROM posts ORDER BY date DESC";
+                    command.Parameters.AddWithValue("@count", count);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            posts.Add(new Post
+                            {
+                                Id = reader.GetGuid(0),
+                                Photo = (byte[])reader["photo"],
+                                Date = reader.GetDateTime(2),
+                                UserId = reader.GetGuid(3)
+                            });
+                        }
+                        return posts;
+                    }
+                }
+            }
+        }
+        public List<Post> FindPostsByHashtag(string hashtag)
         {
             throw new NotImplementedException();
         }
-        public bool DeleteComment(Comment comment)
+        public void AddLikeToPost(User user, Post post)
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user_id, @post_id)";
+                    command.Parameters.AddWithValue("@user_id", user.Id);
+                    command.Parameters.AddWithValue("@post_id", post.Id);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
-
-        public bool DeletePost(Post post)
+        public List<User> GetPostLikes(Post post)
         {
-            throw new NotImplementedException();
-        }
-
-        public bool DeleteUser(User user)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Post[] FindPostsByHashtag(string hashtag)
-        {
-            throw new NotImplementedException();
-        }
-        public Post[] GetLatestPosts(int count)
-        {
-            throw new NotImplementedException();
-        }
-        public Comment[] GetPostComments(Post post)
-        {
-            throw new NotImplementedException();
-        }
-
-        public User[] GetPostLikes(Post post)
-        {
-            throw new NotImplementedException();
+            List<User> users = new List<User>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT id, login, password FROM users WHERE id IN (SELECT user_id FROM likes WHERE post_id = @id)";
+                    command.Parameters.AddWithValue("@id", post.Id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            users.Add(new User
+                            {
+                                Id = reader.GetGuid(0),
+                                Login = reader.GetString(1),
+                                Password = reader.GetString(2)
+                            });
+                        }
+                        return users;
+                    }
+                }
+            }
         }
     }
 }

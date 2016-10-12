@@ -12,7 +12,6 @@ namespace InstagramKiller.Model
         public Guid UserId { get; set; }
         public DateTime Date { get; set; }
         public byte[] Photo { get; set; }
-        public string Description { get; set; }
         public string[] Hashtags { get; set; }
     }
 }
