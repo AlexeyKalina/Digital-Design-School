@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace InstagramKiller.Model
 {
-    interface IDataLayer
+    public interface IDataLayer
     {
         User AddUser(User user);
         User GetUser(Guid id);
@@ -15,6 +15,7 @@ namespace InstagramKiller.Model
         Post GetPost(Guid postId);
         bool DeletePost(Post post);
         Comment AddComment(Comment comment);
+        Comment GetComment(Guid commentId);
         bool DeleteComment(Comment comment);
         Comment[] GetPostComments(Post post);
         Post[] GetLatestPosts(int count);

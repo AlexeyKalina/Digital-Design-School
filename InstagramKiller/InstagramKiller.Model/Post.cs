@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace InstagramKiller.Model
 {
-    class Post
+    public class Post
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
