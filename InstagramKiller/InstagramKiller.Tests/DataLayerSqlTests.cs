@@ -27,7 +27,7 @@ namespace InstagramKiller.Tests
             {
                 UserId = _firstUser.Id,
                 Photo = new byte[10],
-                Hashtags = new string[1] { "testHashtag" }
+                Hashtags = new List<string> { "testHashtag" }
             };
             _firstPost = dataLayer.AddPost(_firstPost);
             _firstComment = new Comment
@@ -66,7 +66,8 @@ namespace InstagramKiller.Tests
             var post = new Post
             {
                 UserId = _firstUser.Id,
-                Photo = new byte[10]
+                Photo = new byte[10],
+                Hashtags = new List<string> { Guid.NewGuid().ToString().Substring(0, 10) }
             };
             //act
             post = dataLayer.AddPost(post);
@@ -155,7 +156,8 @@ namespace InstagramKiller.Tests
             var post = new Post
             {
                 UserId = _firstUser.Id,
-                Photo = new byte[10]
+                Photo = new byte[10],
+                Hashtags = new List<string> { Guid.NewGuid().ToString().Substring(0, 10) }
             };
             dataLayer.AddPost(post);
             //act

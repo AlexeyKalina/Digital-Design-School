@@ -25,6 +25,7 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     user.Id = Guid.NewGuid();
@@ -42,10 +43,12 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT id, login, password FROM users WHERE id = @id";
                     command.Parameters.AddWithValue("@id", id);
+
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
@@ -70,16 +73,20 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     post.Id = Guid.NewGuid();
                     post.Date = DateTime.Now;
+
                     command.CommandText = "INSERT INTO posts (id, photo, date, user_id) VALUES (@id, @photo, @date, @user_id)";
                     command.Parameters.AddWithValue("@id", post.Id);
                     command.Parameters.AddWithValue("@photo", post.Photo);
                     command.Parameters.AddWithValue("@date", post.Date);
                     command.Parameters.AddWithValue("@user_id", post.UserId);
                     command.ExecuteNonQuery();
+
+                    AddHashtagsToPost(post);
                     return post;
                 }
             }
@@ -89,10 +96,12 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT id, photo, date, user_id FROM posts WHERE id = @id";
                     command.Parameters.AddWithValue("@id", postId);
+
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
@@ -118,10 +127,12 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     comment.Id = Guid.NewGuid();
                     comment.Date = DateTime.Now;
+
                     command.CommandText = "INSERT INTO comments (id, text, user_id, post_id, date) VALUES (@id, @text, @user_id, @post_id, @date)";
                     command.Parameters.AddWithValue("@id", comment.Id);
                     command.Parameters.AddWithValue("@text", comment.Text);
@@ -138,10 +149,12 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE id = @id";
                     command.Parameters.AddWithValue("@id", commentId);
+
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
@@ -168,11 +181,12 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"DELETE FROM comments WHERE user_id = @id OR post_id IN (SELECT id FROM posts WHERE user_id = @id);
-                                            DELETE FROM hashtags_posts WHERE post_id IN (SELECT id FROM posts WHERE user_id = @id);
-                                            DELETE FROM likes WHERE user_id = @id OR post_id IN (SELECT id FROM posts WHERE user_id = @id);
+                    command.CommandText = @"DELETE comments FROM comments JOIN posts ON comments.post_id = posts.id WHERE comments.user_id = @id OR posts.user_id = @id;
+                                            DELETE hashtags_posts FROM hashtags_posts JOIN posts ON hashtags_posts.post_id = posts.id WHERE posts.user_id = @id;
+                                            DELETE likes FROM likes JOIN posts ON likes.post_id = posts.id WHERE posts.user_id = @id OR likes.user_id = @id;
                                             DELETE FROM posts WHERE user_id = @id;
                                             DELETE FROM users WHERE id = @id";
                     command.Parameters.AddWithValue("@id", user.Id);
@@ -185,6 +199,7 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"DELETE FROM comments WHERE post_id = @id;
@@ -201,6 +216,7 @@ namespace InstagramKiller.DataLayer.Sql
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "DELETE FROM comments WHERE id = @id";
@@ -212,16 +228,19 @@ namespace InstagramKiller.DataLayer.Sql
         public List<Comment> GetPostComments(Post post)
         {
             List<Comment> comments = new List<Comment>();
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE post_id = @id";
                     command.Parameters.AddWithValue("@id", post.Id);
+
                     using (var reader = command.ExecuteReader())
                     {
-                        if (reader.Read())
+                        while (reader.Read())
                         {
                             comments.Add(new Comment
                             {
@@ -240,23 +259,27 @@ namespace InstagramKiller.DataLayer.Sql
         public List<Post> GetLatestPosts(int count)
         {
             List<Post> posts = new List<Post>();
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT TOP(@count) id, photo, date, user_id FROM posts ORDER BY date DESC";
                     command.Parameters.AddWithValue("@count", count);
+
                     using (var reader = command.ExecuteReader())
                     {
-                        if (reader.Read())
+                        while (reader.Read())
                         {
                             posts.Add(new Post
                             {
                                 Id = reader.GetGuid(0),
                                 Photo = (byte[])reader["photo"],
                                 Date = reader.GetDateTime(2),
-                                UserId = reader.GetGuid(3)
+                                UserId = reader.GetGuid(3),
+                                Hashtags = GetHashtags(reader.GetGuid(0))
                             });
                         }
                         return posts;
@@ -266,13 +289,42 @@ namespace InstagramKiller.DataLayer.Sql
         }
         public List<Post> FindPostsByHashtag(string hashtag)
         {
-            throw new NotImplementedException();
+            List<Post> posts = new List<Post>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"SELECT posts.id, photo, posts.date, posts.user_id FROM posts JOIN hashtags_posts ON posts.id = hashtags_posts.post_id
+                                            JOIN hashtags ON hashtags_posts.hashtag_id = hashtags.id WHERE text = @text";
+                    command.Parameters.AddWithValue("@text", hashtag);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            posts.Add(new Post
+                            {
+                                Id = reader.GetGuid(0),
+                                Photo = (byte[])reader["photo"],
+                                Date = reader.GetDateTime(2),
+                                UserId = reader.GetGuid(3),
+                                Hashtags = GetHashtags(reader.GetGuid(0))
+                            });
+                        }
+                        return posts;
+                    }
+                }
+            }
         }
         public void AddLikeToPost(User user, Post post)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user_id, @post_id)";
@@ -285,16 +337,19 @@ namespace InstagramKiller.DataLayer.Sql
         public List<User> GetPostLikes(Post post)
         {
             List<User> users = new List<User>();
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
+
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT id, login, password FROM users WHERE id IN (SELECT user_id FROM likes WHERE post_id = @id)";
+                    command.CommandText = "SELECT id, login, password FROM users JOIN likes ON users.id = likes.user_id WHERE post_id = @id";
                     command.Parameters.AddWithValue("@id", post.Id);
+
                     using (var reader = command.ExecuteReader())
                     {
-                        if (reader.Read())
+                        while (reader.Read())
                         {
                             users.Add(new User
                             {
@@ -304,6 +359,50 @@ namespace InstagramKiller.DataLayer.Sql
                             });
                         }
                         return users;
+                    }
+                }
+            }
+        }
+        private void AddHashtagsToPost(Post post)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    for (int counter = 0; counter < post.Hashtags.Count; counter++)
+                    {
+                        command.CommandText = @"INSERT INTO hashtags (id, text) VALUES (@hashtag_id, @text)
+                                                INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id)";
+                        command.Parameters.AddWithValue("@hashtag_id", Guid.NewGuid());
+                        command.Parameters.AddWithValue("@text", post.Hashtags[counter]);
+                        command.Parameters.AddWithValue("@post_id", post.Id);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+        private List<string> GetHashtags(Guid postId)
+        {
+            List<string> hashtags = new List<string>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT text FROM hashtags JOIN hashtags_posts ON hashtags.id = hashtags_posts.hashtag_id WHERE post_id = @id";
+                    command.Parameters.AddWithValue("@id", postId);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            hashtags.Add(reader.GetString(0));
+                        }
+                        return hashtags;
                     }
                 }
             }
