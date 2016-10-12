@@ -42,8 +42,8 @@ namespace InstagramKiller.Tests
             //arrange
             var user = new User
             {
-                Login = Guid.NewGuid().ToString().Substring(15),
-                Password = Guid.NewGuid().ToString().Substring(15)
+                Login = Guid.NewGuid().ToString().Substring(0, 10),
+                Password = Guid.NewGuid().ToString().Substring(0, 10)
             };
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
             //act

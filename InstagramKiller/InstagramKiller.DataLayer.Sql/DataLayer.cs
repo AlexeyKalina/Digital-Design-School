@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using InstagramKiller.Model;
+using System.Data.SqlClient;
 
 namespace InstagramKiller.DataLayer.Sql
 {
@@ -36,7 +37,20 @@ namespace InstagramKiller.DataLayer.Sql
 
         public User AddUser(User user)
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    user.Id = Guid.NewGuid();
+                    command.CommandText = "INSERT INTO users (id, login, password) VALUES (@id, @login, @password)";
+                    command.Parameters.AddWithValue("@id", user.Id);
+                    command.Parameters.AddWithValue("@login", user.Login);
+                    command.Parameters.AddWithValue("@password", user.Password);
+                    command.ExecuteNonQuery();
+                    return user;
+                }
+            }
         }
 
         public bool DeleteComment(Comment comment)
@@ -86,7 +100,25 @@ namespace InstagramKiller.DataLayer.Sql
 
         public User GetUser(Guid id)
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT id, login, password FROM users WHERE id = @id";
+                    command.Parameters.AddWithValue("@id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+                        return new User
+                        {
+                            Id = reader.GetGuid(0),
+                            Login = reader.GetString(1),
+                            Password = reader.GetString(2)
+                        };
+                    }
+                }
+            }
         }
     }
 }
