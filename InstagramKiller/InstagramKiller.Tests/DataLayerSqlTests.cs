@@ -28,12 +28,14 @@ namespace InstagramKiller.Tests
                 Photo = new byte[10],
                 Hashtags = new string[1] { "testHashtag" }
             };
+            _firstPost = dataLayer.AddPost(_firstPost);
             _firstComment = new Comment
             {
                 PostId = _firstPost.Id,
                 UserId = _firstUser.Id,
                 Text = "test comment"
             };
+            _firstComment = dataLayer.AddComment(_firstComment);
         }
 
         [TestMethod]
@@ -83,7 +85,7 @@ namespace InstagramKiller.Tests
             {
                 PostId = _firstPost.Id,
                 UserId = _firstUser.Id,
-                Text = Guid.NewGuid().ToString().Substring(50)
+                Text = Guid.NewGuid().ToString()
             };
             //act
             comment = dataLayer.AddComment(comment);
