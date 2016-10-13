@@ -183,10 +183,8 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"DELETE comments FROM comments JOIN posts ON comments.post_id = posts.id WHERE comments.user_id = @id OR posts.user_id = @id;
-                                            DELETE hashtags_posts FROM hashtags_posts JOIN posts ON hashtags_posts.post_id = posts.id WHERE posts.user_id = @id;
-                                            DELETE likes FROM likes JOIN posts ON likes.post_id = posts.id WHERE posts.user_id = @id OR likes.user_id = @id;
-                                            DELETE FROM posts WHERE user_id = @id;
+                    command.CommandText = @"DELETE FROM comments WHERE user_id = @id;
+                                            DELETE FROM likes WHERE user_id = @id;
                                             DELETE FROM users WHERE id = @id";
                     command.Parameters.AddWithValue("@id", user.Id);
                     command.ExecuteNonQuery();
@@ -202,10 +200,7 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"DELETE FROM comments WHERE post_id = @id;
-                                            DELETE FROM hashtags_posts WHERE post_id = @id;
-                                            DELETE FROM likes WHERE post_id = @id;
-                                            DELETE FROM posts WHERE id = @id;";
+                    command.CommandText = @"DELETE FROM posts WHERE id = @id;";
                     command.Parameters.AddWithValue("@id", post.Id);
                     command.ExecuteNonQuery();
                 }
