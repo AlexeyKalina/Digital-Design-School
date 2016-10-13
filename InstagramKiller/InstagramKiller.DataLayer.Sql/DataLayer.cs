@@ -11,6 +11,7 @@ namespace InstagramKiller.DataLayer.Sql
     public class DataLayer : IDataLayer
     {
         private readonly string _connectionString;
+
         public DataLayer(string connectionString)
         {
             if (connectionString == null)
@@ -20,6 +21,7 @@ namespace InstagramKiller.DataLayer.Sql
 
             _connectionString = connectionString;
         }
+
         public User AddUser(User user)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -38,6 +40,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public User GetUser(Guid id)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -68,6 +71,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public Post AddPost(Post post)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -91,6 +95,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public Post GetPost(Guid postId)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -122,6 +127,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public Comment AddComment(Comment comment)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -144,6 +150,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public Comment GetComment(Guid commentId)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -176,6 +183,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public void DeleteUser(User user)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -194,6 +202,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public void DeletePost(Post post)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -211,6 +220,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public void DeleteComment(Comment comment)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -225,6 +235,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public List<Comment> GetPostComments(Post post)
         {
             List<Comment> comments = new List<Comment>();
@@ -256,6 +267,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public List<Post> GetLatestPosts(int count)
         {
             List<Post> posts = new List<Post>();
@@ -287,6 +299,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public List<Post> FindPostsByHashtag(string hashtag)
         {
             List<Post> posts = new List<Post>();
@@ -319,6 +332,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public void AddLikeToPost(User user, Post post)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -334,6 +348,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         public List<User> GetPostLikes(Post post)
         {
             List<User> users = new List<User>();
@@ -363,6 +378,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         private void AddHashtagsToPost(Post post)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -383,6 +399,7 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+
         private List<string> GetHashtags(Guid postId)
         {
             List<string> hashtags = new List<string>();

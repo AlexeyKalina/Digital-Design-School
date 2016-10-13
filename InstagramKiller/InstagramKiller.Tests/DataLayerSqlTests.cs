@@ -11,33 +11,26 @@ namespace InstagramKiller.Tests
     {
         private const string ConnectionString = @"Data Source = DESKTOP-2VEAELC; Initial Catalog = InstagramKiller; Integrated Security = true";
 
-        private User _firstUser;
-        private Post _firstPost;
-        private Comment _firstComment;
-
-        public void FirstData(DataLayer.Sql.DataLayer dataLayer)
+        private User _firstUser = new User
         {
-            _firstUser = new User
-            {
-                Login = "firstUser",
-                Password = "test"
-            };
-            _firstUser = dataLayer.AddUser(_firstUser);
-            _firstPost = new Post
-            {
-                UserId = _firstUser.Id,
-                Photo = new byte[10],
-                Hashtags = new List<string> { "testHashtag" }
-            };
-            _firstPost = dataLayer.AddPost(_firstPost);
-            _firstComment = new Comment
-            {
-                PostId = _firstPost.Id,
-                UserId = _firstUser.Id,
-                Text = "test comment"
-            };
-            _firstComment = dataLayer.AddComment(_firstComment);
-        }
+            Id = Guid.Empty,
+            Login = "firstUser",
+            Password = "test"
+        };
+        private Post _firstPost = new Post
+        {
+            Id = Guid.Empty,
+            UserId = Guid.Empty,
+            Photo = new byte[10],
+            Hashtags = new List<string> { "testHashtag" }
+        };
+        private Comment _firstComment = new Comment
+        {
+            Id = Guid.Empty,
+            PostId = Guid.Empty,
+            UserId = Guid.Empty,
+            Text = "test comment"
+        };
 
         [TestMethod]
         public void ShouldAddUser()
@@ -49,8 +42,10 @@ namespace InstagramKiller.Tests
                 Password = Guid.NewGuid().ToString().Substring(0, 10)
             };
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
             //act
             user = dataLayer.AddUser(user);
+
             //asserts
             var resultUser = dataLayer.GetUser(user.Id);
             Assert.AreEqual(user.Login, resultUser.Login);
@@ -61,7 +56,6 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
 
             var post = new Post
             {
@@ -69,8 +63,10 @@ namespace InstagramKiller.Tests
                 Photo = new byte[10],
                 Hashtags = new List<string> { Guid.NewGuid().ToString().Substring(0, 10) }
             };
+
             //act
             post = dataLayer.AddPost(post);
+
             //asserts
             var resultPost = dataLayer.GetPost(post.Id);
             Assert.AreEqual(post.UserId, resultPost.UserId);
@@ -81,7 +77,6 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
 
             var comment = new Comment
             {
@@ -89,8 +84,10 @@ namespace InstagramKiller.Tests
                 UserId = _firstUser.Id,
                 Text = Guid.NewGuid().ToString()
             };
+
             //act
             comment = dataLayer.AddComment(comment);
+
             //asserts
             var resultComment = dataLayer.GetComment(comment.Id);
             Assert.AreEqual(comment.Text, resultComment.Text);
@@ -101,11 +98,19 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
+            var user = new User
+            {
+                Login = "delete user",
+                Password = "test"
+            };
+            user = dataLayer.AddUser(user);
+
             //act
-            dataLayer.DeleteUser(_firstUser);
+            dataLayer.DeleteUser(user);
+
             //asserts
-            var resultUser = dataLayer.GetUser(_firstUser.Id);
+            var resultUser = dataLayer.GetUser(user.Id);
             Assert.AreEqual(resultUser, null);
         }
 
@@ -114,11 +119,20 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
+            var post = new Post
+            {
+                UserId = _firstUser.Id,
+                Photo = new byte[10],
+                Hashtags = new List<string> { "delete test" }
+            };
+            post = dataLayer.AddPost(post);
+
             //act
-            dataLayer.DeletePost(_firstPost);
+            dataLayer.DeletePost(post);
+
             //asserts
-            var resultPost = dataLayer.GetPost(_firstPost.Id);
+            var resultPost = dataLayer.GetPost(post.Id);
             Assert.AreEqual(resultPost, null);
         }
 
@@ -127,11 +141,19 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
+            var comment = new Comment
+            {
+                PostId = _firstPost.Id,
+                UserId = _firstUser.Id,
+                Text = "delete test"
+            };
+            comment = dataLayer.AddComment(comment);
+            
             //act
-            dataLayer.DeleteComment(_firstComment);
+            dataLayer.DeleteComment(comment);
             //asserts
-            var resultComment = dataLayer.GetComment(_firstComment.Id);
+            var resultComment = dataLayer.GetComment(comment.Id);
             Assert.AreEqual(resultComment, null);
         }
 
@@ -140,9 +162,10 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
             //act
             List<Comment> comments = dataLayer.GetPostComments(_firstPost);
+
             //asserts
             Assert.AreEqual(comments.Any(comment => comment.Id == _firstComment.Id), true);
         }
@@ -152,7 +175,7 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
             var post = new Post
             {
                 UserId = _firstUser.Id,
@@ -160,8 +183,10 @@ namespace InstagramKiller.Tests
                 Hashtags = new List<string> { Guid.NewGuid().ToString().Substring(0, 10) }
             };
             dataLayer.AddPost(post);
+
             //act
             List<Post> posts = dataLayer.GetLatestPosts(5);
+
             //asserts
             Assert.AreEqual(posts[0].Id, post.Id);
         }
@@ -171,10 +196,11 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
             string hashtag = _firstPost.Hashtags[0];
+
             //act
             List<Post> posts = dataLayer.FindPostsByHashtag(hashtag);
+
             //asserts
             Assert.AreEqual(posts.All(post => post.Hashtags.Contains(hashtag)), true);
         }
@@ -184,9 +210,10 @@ namespace InstagramKiller.Tests
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
-            FirstData(dataLayer);
+
             //act
             dataLayer.AddLikeToPost(_firstUser, _firstPost);
+
             //asserts
             List<User> likes = dataLayer.GetPostLikes(_firstPost);
             Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), true);
