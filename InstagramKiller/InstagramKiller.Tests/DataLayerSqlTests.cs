@@ -164,7 +164,7 @@ namespace InstagramKiller.Tests
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
 
             //act
-            List<Comment> comments = dataLayer.GetPostComments(_firstPost);
+            var comments = dataLayer.GetPostComments(_firstPost);
 
             //asserts
             Assert.AreEqual(comments.Any(comment => comment.Id == _firstComment.Id), true);
@@ -185,7 +185,7 @@ namespace InstagramKiller.Tests
             dataLayer.AddPost(post);
 
             //act
-            List<Post> posts = dataLayer.GetLatestPosts(5);
+            var posts = dataLayer.GetLatestPosts(5);
 
             //asserts
             Assert.AreEqual(posts[0].Id, post.Id);
@@ -199,7 +199,7 @@ namespace InstagramKiller.Tests
             string hashtag = _firstPost.Hashtags[0];
 
             //act
-            List<Post> posts = dataLayer.FindPostsByHashtag(hashtag);
+            var posts = dataLayer.FindPostsByHashtag(hashtag);
 
             //asserts
             Assert.AreEqual(posts.All(post => post.Hashtags.Contains(hashtag)), true);
@@ -215,7 +215,7 @@ namespace InstagramKiller.Tests
             dataLayer.AddLikeToPost(_firstUser, _firstPost);
 
             //asserts
-            List<User> likes = dataLayer.GetPostLikes(_firstPost);
+            var likes = dataLayer.GetPostLikes(_firstPost);
             Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), true);
         }
     }

@@ -63,10 +63,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 Password = reader.GetString(2)
                             };
                         }
-                        else
-                        {
-                            return null;
-                        }
+                        return null;
                     }
                 }
             }
@@ -119,10 +116,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 UserId = reader.GetGuid(3)
                             };
                         }
-                        else
-                        {
-                            return null;
-                        }
+                        return null;
                     }
                 }
             }
@@ -175,10 +169,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 Date = reader.GetDateTime(4)
                             };
                         }
-                        else
-                        {
-                            return null;
-                        }
+                        return null;
                     }
                 }
             }
@@ -238,7 +229,7 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<Comment> GetPostComments(Post post)
         {
-            List<Comment> comments = new List<Comment>();
+            var comments = new List<Comment>();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -270,7 +261,7 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<Post> GetLatestPosts(int count)
         {
-            List<Post> posts = new List<Post>();
+            var posts = new List<Post>();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -302,7 +293,7 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<Post> FindPostsByHashtag(string hashtag)
         {
-            List<Post> posts = new List<Post>();
+            var posts = new List<Post>();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -351,7 +342,7 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<User> GetPostLikes(Post post)
         {
-            List<User> users = new List<User>();
+            var users = new List<User>();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -402,7 +393,7 @@ namespace InstagramKiller.DataLayer.Sql
 
         private List<string> GetHashtags(Guid postId)
         {
-            List<string> hashtags = new List<string>();
+            var hashtags = new List<string>();
 
             using (var connection = new SqlConnection(_connectionString))
             {
