@@ -183,9 +183,11 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"DELETE FROM comments WHERE user_id = @id;
-                                            DELETE FROM likes WHERE user_id = @id;
-                                            DELETE FROM users WHERE id = @id";
+                    command.CommandText = @"BEGIN TRANSACTION
+                                                DELETE FROM comments WHERE user_id = @id;
+                                                DELETE FROM likes WHERE user_id = @id;
+                                                DELETE FROM users WHERE id = @id
+                                            COMMIT";
                     command.Parameters.AddWithValue("@id", user.Id);
                     command.ExecuteNonQuery();
                 }
@@ -375,8 +377,10 @@ namespace InstagramKiller.DataLayer.Sql
                 {
                     for (int counter = 0; counter < post.Hashtags.Count; counter++)
                     {
-                        command.CommandText = @"INSERT INTO hashtags (id, text) VALUES (@hashtag_id, @text)
-                                                INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id)";
+                        command.CommandText = @"BEGIN TRANSACTION
+                                                    INSERT INTO hashtags (id, text) VALUES (@hashtag_id, @text)
+                                                    INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id)
+                                                COMMIT";
                         command.Parameters.AddWithValue("@hashtag_id", Guid.NewGuid());
                         command.Parameters.AddWithValue("@text", post.Hashtags[counter]);
                         command.Parameters.AddWithValue("@post_id", post.Id);
