@@ -24,6 +24,11 @@ namespace InstagramKiller.DataLayer.Sql
 
         public User AddUser(User user)
         {
+            if (user.Login.Length > 12)
+                throw new ArgumentException("Login is not valid");
+            if (user.Password.Length > 12)
+                throw new ArgumentException("Password is not valid");
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -63,7 +68,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 Password = reader.GetString(2)
                             };
                         }
-                        return null;
+                        throw new ArgumentException("User with id not exists");
                     }
                 }
             }
@@ -71,6 +76,9 @@ namespace InstagramKiller.DataLayer.Sql
 
         public Post AddPost(Post post)
         {
+            if (post.Hashtags.Any(h => h.Length > 12))
+                throw new ArgumentException("Hashtags are not valid");
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -116,7 +124,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 UserId = reader.GetGuid(3)
                             };
                         }
-                        return null;
+                        throw new ArgumentException("Post with id not exists");
                     }
                 }
             }
@@ -124,6 +132,9 @@ namespace InstagramKiller.DataLayer.Sql
 
         public Comment AddComment(Comment comment)
         {
+            if (comment.Text.Length > 50)
+                throw new ArgumentException("Text is not valid");
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -169,7 +180,7 @@ namespace InstagramKiller.DataLayer.Sql
                                 Date = reader.GetDateTime(4)
                             };
                         }
-                        return null;
+                        throw new ArgumentException("Comment with id not exists");
                     }
                 }
             }

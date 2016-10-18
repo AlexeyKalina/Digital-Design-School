@@ -94,6 +94,7 @@ namespace InstagramKiller.Tests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "User with id not exists")]
         public void ShouldDeleteUser()
         {
             //arrange
@@ -111,10 +112,10 @@ namespace InstagramKiller.Tests
 
             //asserts
             var resultUser = dataLayer.GetUser(user.Id);
-            Assert.AreEqual(resultUser, null);
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
         public void ShouldDeletePost()
         {
             //arrange
@@ -133,10 +134,10 @@ namespace InstagramKiller.Tests
 
             //asserts
             var resultPost = dataLayer.GetPost(post.Id);
-            Assert.AreEqual(resultPost, null);
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Comment with id not exists")]
         public void ShouldDeleteComment()
         {
             //arrange
@@ -154,7 +155,6 @@ namespace InstagramKiller.Tests
             dataLayer.DeleteComment(comment);
             //asserts
             var resultComment = dataLayer.GetComment(comment.Id);
-            Assert.AreEqual(resultComment, null);
         }
 
         [TestMethod]
