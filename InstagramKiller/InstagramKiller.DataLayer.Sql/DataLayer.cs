@@ -116,12 +116,14 @@ namespace InstagramKiller.DataLayer.Sql
                     {
                         if (reader.Read())
                         {
+                            Guid id = reader.GetGuid(0);
                             return new Post
                             {
-                                Id = reader.GetGuid(0),
+                                Id = id,
                                 Photo = (byte[])reader["photo"],
                                 Date = reader.GetDateTime(2),
-                                UserId = reader.GetGuid(3)
+                                UserId = reader.GetGuid(3),
+                                Hashtags = GetHashtags(id)
                             };
                         }
                         throw new ArgumentException("Post with id not exists");
@@ -130,10 +132,12 @@ namespace InstagramKiller.DataLayer.Sql
             }
         }
 
-        public Comment AddComment(Comment comment)
+        public Comment AddCommentToPost(Comment comment, Guid postId)
         {
             if (comment.Text.Length > 50)
                 throw new ArgumentException("Text is not valid");
+
+            Post post = GetPost(postId);
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -143,12 +147,13 @@ namespace InstagramKiller.DataLayer.Sql
                 {
                     comment.Id = Guid.NewGuid();
                     comment.Date = DateTime.Now;
+                    comment.PostId = post.Id;
 
                     command.CommandText = "INSERT INTO comments (id, text, user_id, post_id, date) VALUES (@id, @text, @user_id, @post_id, @date)";
                     command.Parameters.AddWithValue("@id", comment.Id);
                     command.Parameters.AddWithValue("@text", comment.Text);
                     command.Parameters.AddWithValue("@user_id", comment.UserId);
-                    command.Parameters.AddWithValue("@post_id", comment.PostId);
+                    command.Parameters.AddWithValue("@post_id", post.Id);
                     command.Parameters.AddWithValue("@date", comment.Date);
                     command.ExecuteNonQuery();
                     return comment;
@@ -186,7 +191,7 @@ namespace InstagramKiller.DataLayer.Sql
             }
         }
 
-        public void DeleteUser(User user)
+        public void DeleteUser(Guid userId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -199,13 +204,13 @@ namespace InstagramKiller.DataLayer.Sql
                                                 DELETE FROM likes WHERE user_id = @id;
                                                 DELETE FROM users WHERE id = @id
                                             COMMIT";
-                    command.Parameters.AddWithValue("@id", user.Id);
+                    command.Parameters.AddWithValue("@id", userId);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public void DeletePost(Post post)
+        public void DeletePost(Guid postId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -214,13 +219,13 @@ namespace InstagramKiller.DataLayer.Sql
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"DELETE FROM posts WHERE id = @id;";
-                    command.Parameters.AddWithValue("@id", post.Id);
+                    command.Parameters.AddWithValue("@id", postId);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public void DeleteComment(Comment comment)
+        public void DeleteComment(Guid commentId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -229,13 +234,13 @@ namespace InstagramKiller.DataLayer.Sql
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "DELETE FROM comments WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", comment.Id);
+                    command.Parameters.AddWithValue("@id", commentId);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public List<Comment> GetPostComments(Post post)
+        public List<Comment> GetPostComments(Guid postId)
         {
             var comments = new List<Comment>();
 
@@ -246,7 +251,7 @@ namespace InstagramKiller.DataLayer.Sql
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE post_id = @id";
-                    command.Parameters.AddWithValue("@id", post.Id);
+                    command.Parameters.AddWithValue("@id", postId);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -332,7 +337,7 @@ namespace InstagramKiller.DataLayer.Sql
             }
         }
 
-        public void AddLikeToPost(User user, Post post)
+        public void AddLikeToPost(Guid userId, Guid postId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -340,15 +345,25 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
+                    command.CommandText = @"SELECT * FROM likes WHERE user_id = @user_id AND post_id = @post_id";
+                    command.Parameters.AddWithValue("@user_id", userId);
+                    command.Parameters.AddWithValue("@post_id", postId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            throw new ArgumentException("This like already exists");
+                        }
+                    }
                     command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user_id, @post_id)";
-                    command.Parameters.AddWithValue("@user_id", user.Id);
-                    command.Parameters.AddWithValue("@post_id", post.Id);
+                    command.Parameters.AddWithValue("@user_id", userId);
+                    command.Parameters.AddWithValue("@post_id", postId);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public List<User> GetPostLikes(Post post)
+        public List<User> GetPostLikes(Guid postId)
         {
             var users = new List<User>();
 
@@ -358,8 +373,8 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT id, login, password FROM users JOIN likes ON users.id = likes.user_id WHERE post_id = @id";
-                    command.Parameters.AddWithValue("@id", post.Id);
+                    command.CommandText = "SELECT id, login, password FROM users JOIN likes ON users.id = likes.user_id WHERE post_id = @id;";
+                    command.Parameters.AddWithValue("@id", postId);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -380,6 +395,9 @@ namespace InstagramKiller.DataLayer.Sql
 
         private void AddHashtagsToPost(Post post)
         {
+            bool hashtagExist = false;
+            Guid id = Guid.NewGuid();
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -388,14 +406,36 @@ namespace InstagramKiller.DataLayer.Sql
                 {
                     for (int counter = 0; counter < post.Hashtags.Count; counter++)
                     {
-                        command.CommandText = @"BEGIN TRANSACTION
+                        command.CommandText = "SELECT id FROM hashtags WHERE text = @hashtag;";
+                        command.Parameters.AddWithValue("@hashtag", post.Hashtags[counter]);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                hashtagExist = true;
+                                id = reader.GetGuid(0);
+                            }
+
+                        }
+                        if (hashtagExist)
+                        {
+                            command.CommandText = @"INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id);";
+                            command.Parameters.AddWithValue("@hashtag_id", id);
+                            command.Parameters.AddWithValue("@post_id", post.Id);
+                            command.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            command.CommandText = @"BEGIN TRANSACTION
                                                     INSERT INTO hashtags (id, text) VALUES (@hashtag_id, @text)
                                                     INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id)
                                                 COMMIT";
-                        command.Parameters.AddWithValue("@hashtag_id", Guid.NewGuid());
-                        command.Parameters.AddWithValue("@text", post.Hashtags[counter]);
-                        command.Parameters.AddWithValue("@post_id", post.Id);
-                        command.ExecuteNonQuery();
+                            command.Parameters.AddWithValue("@hashtag_id", Guid.NewGuid());
+                            command.Parameters.AddWithValue("@text", post.Hashtags[counter]);
+                            command.Parameters.AddWithValue("@post_id", post.Id);
+                            command.ExecuteNonQuery();
+                        }
                     }
                 }
             }
@@ -411,7 +451,7 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT text FROM hashtags JOIN hashtags_posts ON hashtags.id = hashtags_posts.hashtag_id WHERE post_id = @id";
+                    command.CommandText = "SELECT text FROM hashtags JOIN hashtags_posts ON hashtags.id = hashtags_posts.hashtag_id WHERE post_id = @id;";
                     command.Parameters.AddWithValue("@id", postId);
 
                     using (var reader = command.ExecuteReader())
@@ -422,6 +462,22 @@ namespace InstagramKiller.DataLayer.Sql
                         }
                         return hashtags;
                     }
+                }
+            }
+        }
+
+        public void DeleteLikeFromPost(Guid userId, Guid postId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM likes WHERE post_id = @post_id AND user_id = @user_id;";
+                    command.Parameters.AddWithValue("@post_id", postId);
+                    command.Parameters.AddWithValue("@user_id", userId);
+                    command.ExecuteNonQuery();
                 }
             }
         }

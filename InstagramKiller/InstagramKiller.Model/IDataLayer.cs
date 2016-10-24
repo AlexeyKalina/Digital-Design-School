@@ -10,17 +10,18 @@ namespace InstagramKiller.Model
     {
         User AddUser(User user);
         User GetUser(Guid id);
-        void DeleteUser(User user);
+        void DeleteUser(Guid userId);
         Post AddPost(Post post);
         Post GetPost(Guid postId);
-        void DeletePost(Post post);
-        Comment AddComment(Comment comment);
+        void DeletePost(Guid postId);
+        Comment AddCommentToPost(Comment comment, Guid postId);
         Comment GetComment(Guid commentId);
-        void DeleteComment(Comment comment);
-        List<Comment> GetPostComments(Post post);
+        void DeleteComment(Guid commentId);
+        List<Comment> GetPostComments(Guid postId);
         List<Post> GetLatestPosts(int count);
         List<Post> FindPostsByHashtag(string hashtag);
-        void AddLikeToPost(User user, Post post);
-        List<User> GetPostLikes(Post post);
+        void AddLikeToPost(Guid userId, Guid postId);
+        List<User> GetPostLikes(Guid postId);
+        void DeleteLikeFromPost(Guid userId, Guid postId);
     }
 }

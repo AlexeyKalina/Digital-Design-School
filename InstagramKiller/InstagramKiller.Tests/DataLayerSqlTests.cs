@@ -80,13 +80,12 @@ namespace InstagramKiller.Tests
 
             var comment = new Comment
             {
-                PostId = _firstPost.Id,
                 UserId = _firstUser.Id,
                 Text = Guid.NewGuid().ToString()
             };
 
             //act
-            comment = dataLayer.AddComment(comment);
+            comment = dataLayer.AddCommentToPost(comment, _firstPost.Id);
 
             //asserts
             var resultComment = dataLayer.GetComment(comment.Id);
@@ -108,7 +107,7 @@ namespace InstagramKiller.Tests
             user = dataLayer.AddUser(user);
 
             //act
-            dataLayer.DeleteUser(user);
+            dataLayer.DeleteUser(user.Id);
 
             //asserts
             var resultUser = dataLayer.GetUser(user.Id);
@@ -130,7 +129,7 @@ namespace InstagramKiller.Tests
             post = dataLayer.AddPost(post);
 
             //act
-            dataLayer.DeletePost(post);
+            dataLayer.DeletePost(post.Id);
 
             //asserts
             var resultPost = dataLayer.GetPost(post.Id);
@@ -145,14 +144,13 @@ namespace InstagramKiller.Tests
 
             var comment = new Comment
             {
-                PostId = _firstPost.Id,
                 UserId = _firstUser.Id,
                 Text = "delete test"
             };
-            comment = dataLayer.AddComment(comment);
-            
+            comment = dataLayer.AddCommentToPost(comment, _firstPost.Id);
+
             //act
-            dataLayer.DeleteComment(comment);
+            dataLayer.DeleteComment(comment.Id);
             //asserts
             var resultComment = dataLayer.GetComment(comment.Id);
         }
@@ -164,7 +162,7 @@ namespace InstagramKiller.Tests
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
 
             //act
-            var comments = dataLayer.GetPostComments(_firstPost);
+            var comments = dataLayer.GetPostComments(_firstPost.Id);
 
             //asserts
             Assert.AreEqual(comments.Any(comment => comment.Id == _firstComment.Id), true);
@@ -206,17 +204,35 @@ namespace InstagramKiller.Tests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "This like already exists")]
         public void ShouldAddLikeToPost()
         {
             //arrange
             var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
 
             //act
-            dataLayer.AddLikeToPost(_firstUser, _firstPost);
+            dataLayer.AddLikeToPost(_firstUser.Id, _firstPost.Id);
 
             //asserts
-            var likes = dataLayer.GetPostLikes(_firstPost);
+            var likes = dataLayer.GetPostLikes(_firstPost.Id);
             Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), true);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "This like already exists")]
+        public void ShouldDeleteLikeFromPost()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            dataLayer.AddLikeToPost(_firstUser.Id, _firstPost.Id);
+
+            //act
+            dataLayer.DeleteLikeFromPost(_firstUser.Id, _firstPost.Id);
+
+            //asserts
+            var likes = dataLayer.GetPostLikes(_firstPost.Id);
+            Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), false);
         }
     }
 }
