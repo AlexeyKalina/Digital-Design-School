@@ -17,6 +17,12 @@ namespace InstagramKiller.Tests
             Login = "firstUser",
             Password = "test"
         };
+        private User _secondUser = new User()
+        {
+            Id = new Guid(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }),
+            Login = "secondUser",
+            Password = "test2"
+        };
         private Post _firstPost = new Post
         {
             Id = Guid.Empty,
@@ -204,7 +210,6 @@ namespace InstagramKiller.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ArgumentException), "This like already exists")]
         public void ShouldAddLikeToPost()
         {
             //arrange
@@ -216,10 +221,10 @@ namespace InstagramKiller.Tests
             //asserts
             var likes = dataLayer.GetPostLikes(_firstPost.Id);
             Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), true);
+            dataLayer.DeleteLikeFromPost(_firstUser.Id, _firstPost.Id);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ArgumentException), "This like already exists")]
         public void ShouldDeleteLikeFromPost()
         {
             //arrange
@@ -251,8 +256,120 @@ namespace InstagramKiller.Tests
 
             //act
             dataLayer.AddUser(user);
+        }
 
-            //asserts
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "User with id not exists")]
+        public void ShouldAddPostToNotExistingUserNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            var post = new Post()
+            {
+                UserId = Guid.NewGuid(),
+                Photo = new byte[10],
+                Hashtags = new List<string> { Guid.NewGuid().ToString().Substring(0, 10) }
+            };
+
+            //act
+            dataLayer.AddPost(post);
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "This like already exists")]
+        public void ShouldAddExistingLikeNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.AddLikeToPost(_secondUser.Id, _firstPost.Id);
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
+        public void ShouldAddCommentToNotExistingPostNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            var comment = new Comment()
+            {
+                UserId = _firstUser.Id,
+                Text = "negativeTest"
+            };
+
+            //act
+            dataLayer.AddCommentToPost(comment, Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "User with id not exists")]
+        public void ShouldDeleteNotExistingUserNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.DeleteUser(Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
+        public void ShouldDeleteNotExistingPostNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.DeletePost(Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Comment with id not exists")]
+        public void ShouldDeleteNotExistingCommentNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.DeleteComment(Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
+        public void ShouldGetCommentsFromNotExistingPost()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.GetPostComments(Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "User with id not exists")]
+        public void ShouldAddLikeFromNotExistingUser()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.AddLikeToPost(Guid.NewGuid(), _firstPost.Id);
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
+        public void ShouldAddLikeToNotExistingPost()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.AddLikeToPost(_firstUser.Id, Guid.NewGuid());
+        }
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "Post with id not exists")]
+        public void ShouldGetLikeFromNotExistingPost()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            //act
+            dataLayer.GetPostLikes(Guid.NewGuid());
         }
     }
 }

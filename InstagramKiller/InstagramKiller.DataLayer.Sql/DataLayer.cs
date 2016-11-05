@@ -199,6 +199,8 @@ namespace InstagramKiller.DataLayer.Sql
 
         public void DeleteUser(Guid userId)
         {
+            GetUser(userId);
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -218,6 +220,8 @@ namespace InstagramKiller.DataLayer.Sql
 
         public void DeletePost(Guid postId)
         {
+            GetPost(postId);
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -233,6 +237,8 @@ namespace InstagramKiller.DataLayer.Sql
 
         public void DeleteComment(Guid commentId)
         {
+            GetComment(commentId);
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -248,6 +254,8 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<Comment> GetPostComments(Guid postId)
         {
+            GetPost(postId);
+
             var comments = new List<Comment>();
 
             using (var connection = new SqlConnection(_connectionString))
@@ -345,6 +353,10 @@ namespace InstagramKiller.DataLayer.Sql
 
         public void AddLikeToPost(Guid userId, Guid postId)
         {
+            GetUser(userId);
+
+            GetPost(postId);
+
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
@@ -361,9 +373,9 @@ namespace InstagramKiller.DataLayer.Sql
                             throw new ArgumentException("This like already exists");
                         }
                     }
-                    command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user_id, @post_id)";
-                    command.Parameters.AddWithValue("@user_id", userId);
-                    command.Parameters.AddWithValue("@post_id", postId);
+                    command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user2_id, @post2_id)";
+                    command.Parameters.AddWithValue("@user2_id", userId);
+                    command.Parameters.AddWithValue("@post2_id", postId);
                     command.ExecuteNonQuery();
                 }
             }
@@ -371,6 +383,8 @@ namespace InstagramKiller.DataLayer.Sql
 
         public List<User> GetPostLikes(Guid postId)
         {
+            GetPost(postId);
+
             var users = new List<User>();
 
             using (var connection = new SqlConnection(_connectionString))
