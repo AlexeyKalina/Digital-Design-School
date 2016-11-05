@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstagramKiller.Tests", "In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstagramKiller.WebApi", "InstagramKiller.WebApi\InstagramKiller.WebApi.csproj", "{BC804F0B-D489-47CC-A823-6D6765DB54BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstagramKiller.Log", "InstagramKiller.Log\InstagramKiller.Log.csproj", "{6225146B-53FB-424A-9583-569E58D92213}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,22 @@ Global
 		{BC804F0B-D489-47CC-A823-6D6765DB54BD}.Release|x64.Build.0 = Release|Any CPU
 		{BC804F0B-D489-47CC-A823-6D6765DB54BD}.Release|x86.ActiveCfg = Release|Any CPU
 		{BC804F0B-D489-47CC-A823-6D6765DB54BD}.Release|x86.Build.0 = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|ARM.Build.0 = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|x64.Build.0 = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Debug|x86.Build.0 = Debug|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|ARM.ActiveCfg = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|ARM.Build.0 = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|x64.ActiveCfg = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|x64.Build.0 = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|x86.ActiveCfg = Release|Any CPU
+		{6225146B-53FB-424A-9583-569E58D92213}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

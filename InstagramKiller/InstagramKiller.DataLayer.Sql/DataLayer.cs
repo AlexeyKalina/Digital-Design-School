@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using InstagramKiller.Model;
 using System.Data.SqlClient;
+using NLog;
+using InstagramKiller.Log;
 
 namespace InstagramKiller.DataLayer.Sql
 {
@@ -28,6 +30,8 @@ namespace InstagramKiller.DataLayer.Sql
                 throw new ArgumentException("Login is not valid");
             if (user.Password.Length > 12)
                 throw new ArgumentException("Password is not valid");
+            if (UserWithLoginExist(user.Login))
+                throw new ArgumentException("User with this login already exists");
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -78,6 +82,8 @@ namespace InstagramKiller.DataLayer.Sql
         {
             if (post.Hashtags.Any(h => h.Length > 12))
                 throw new ArgumentException("Hashtags are not valid");
+
+            GetUser(post.UserId);
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -392,6 +398,21 @@ namespace InstagramKiller.DataLayer.Sql
                 }
             }
         }
+        public void DeleteLikeFromPost(Guid userId, Guid postId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM likes WHERE post_id = @post_id AND user_id = @user_id;";
+                    command.Parameters.AddWithValue("@post_id", postId);
+                    command.Parameters.AddWithValue("@user_id", userId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
 
         private void AddHashtagsToPost(Post post)
         {
@@ -466,7 +487,7 @@ namespace InstagramKiller.DataLayer.Sql
             }
         }
 
-        public void DeleteLikeFromPost(Guid userId, Guid postId)
+        private bool UserWithLoginExist(string login)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -474,10 +495,16 @@ namespace InstagramKiller.DataLayer.Sql
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"DELETE FROM likes WHERE post_id = @post_id AND user_id = @user_id;";
-                    command.Parameters.AddWithValue("@post_id", postId);
-                    command.Parameters.AddWithValue("@user_id", userId);
-                    command.ExecuteNonQuery();
+                    command.CommandText = "SELECT id, login, password FROM users WHERE login = @login";
+                    command.Parameters.AddWithValue("@login", login);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                            return true;
+                        else
+                            return false;
+                    }
                 }
             }
         }

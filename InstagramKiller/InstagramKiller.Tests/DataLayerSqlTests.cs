@@ -234,5 +234,25 @@ namespace InstagramKiller.Tests
             var likes = dataLayer.GetPostLikes(_firstPost.Id);
             Assert.AreEqual(likes.Any(user => user.Id == _firstUser.Id), false);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException), "User with this login already exists")]
+        public void ShouldAddUserWithExistingLoginNegative()
+        {
+            //arrange
+            var dataLayer = new DataLayer.Sql.DataLayer(ConnectionString);
+
+            var user = new User()
+            {
+                Id = Guid.NewGuid(),
+                Login = "firstUser",
+                Password = "jdnadnadn"
+            };
+
+            //act
+            dataLayer.AddUser(user);
+
+            //asserts
+        }
     }
 }
