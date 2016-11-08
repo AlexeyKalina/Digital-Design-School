@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6FFD2143-F860-4378-B22C-BBD2D49EF1D0}</ProjectGuid>
+    <ProjectGuid>{877FE765-2E6F-4EAD-A9C6-318A47E99C8D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>InstagramKiller.DataLayer.Sql</RootNamespace>
-    <AssemblyName>InstagramKiller.DataLayer.Sql</AssemblyName>
+    <RootNamespace>InstagramKiller.Utils</RootNamespace>
+    <AssemblyName>InstagramKiller.Utils</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.3.10\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.3.11\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -44,22 +44,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataLayer.cs" />
+    <Compile Include="Logs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\InstagramKiller.Model\InstagramKiller.Model.csproj">
-      <Project>{7913ae5c-89d7-44f2-995c-e0cdfc91f982}</Project>
-      <Name>InstagramKiller.Model</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\InstagramKiller.Utils\InstagramKiller.Utils.csproj">
-      <Project>{877fe765-2e6f-4ead-a9c6-318a47e99c8d}</Project>
-      <Name>InstagramKiller.Utils</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\InstagramKiller.Utils\NLog.config">
-      <Link>NLog.config</Link>
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
