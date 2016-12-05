@@ -16,8 +16,6 @@ namespace InstagramKiller.Wpf
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private readonly HttpClientWrapper _httpClient = new HttpClientWrapper("http://localhost:3968/");
-        private string _userName;
-        private string _userId;
         private string _fileName;
         private string _hashtags = "";
         public string Hashtags
@@ -41,28 +39,6 @@ namespace InstagramKiller.Wpf
             set
             {
                 _fileName = value;
-                OnPropertyChanged();
-            }
-        }
-        public string UserId
-        {
-            get
-            {
-                return _userId;
-            }
-            set
-            {
-                _userId = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string UserName
-        {
-            get { return _userName; }
-            set
-            {
-                _userName = value;
                 OnPropertyChanged();
             }
         }
