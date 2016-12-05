@@ -24,7 +24,7 @@ namespace InstagramKiller.WebApi.Controllers
         /// <param name="post">post</param>
         /// <returns></returns>
         [HttpPost]
-        [Route("api/posts/{id}")]
+        [Route("api/posts")]
         public Post CreatePost(Post post)
         {
             return _dataLayer.AddPost(post);

@@ -99,7 +99,7 @@ namespace InstagramKiller.DataLayer.Sql
         {
             Logs.logger.Debug("Старт метода AddPost");
             Logs.logger.Debug("Проверяем валидность данных добавляемого поста");
-            if (post.Hashtags.Any(h => h.Length > 12))
+            if (post.Hashtags == null || post.Hashtags.Any(h => h.Length > 12))
             {
                 Logs.logger.Debug("Невалидный список хэштегов. Содержится хэштег {0}, имеющий длину больше 12", post.Hashtags.Find(h => h.Length > 12));
                 throw new ArgumentException("Hashtags are not valid");
@@ -559,8 +559,8 @@ namespace InstagramKiller.DataLayer.Sql
                     for (int counter = 0; counter < post.Hashtags.Count; counter++)
                     {
                         Logs.logger.Debug("Отправляем SELECT запрос по хэштегу с текстом {0} в базу данных", post.Hashtags[counter]);
-                        command.CommandText = "SELECT id FROM hashtags WHERE text = @hashtag;";
-                        command.Parameters.AddWithValue("@hashtag", post.Hashtags[counter]);
+                        command.CommandText = string.Format("SELECT id FROM hashtags WHERE text = @hashtag{0};", counter);
+                        command.Parameters.AddWithValue(string.Format("@hashtag{0}", counter), post.Hashtags[counter]);
 
                         using (var reader = command.ExecuteReader())
                         {
@@ -574,10 +574,11 @@ namespace InstagramKiller.DataLayer.Sql
                         }
                         if (hashtagExist)
                         {
+                            hashtagExist = false;
                             Logs.logger.Debug("Отправляем запрос на добавление привязки поста с id = {0} к хэштегу с текстом {1} в базу данных", post.Id, post.Hashtags[counter]);
-                            command.CommandText = @"INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id);";
-                            command.Parameters.AddWithValue("@hashtag_id", id);
-                            command.Parameters.AddWithValue("@post_id", post.Id);
+                            command.CommandText = string.Format(@"INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id{0}, @post_id{0});", counter);
+                            command.Parameters.AddWithValue(string.Format("@hashtag_id{0}", counter), id);
+                            command.Parameters.AddWithValue(string.Format("@post_id{0}", counter), post.Id);
                             command.ExecuteNonQuery();
                             Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);
                         }
@@ -585,13 +586,13 @@ namespace InstagramKiller.DataLayer.Sql
                         {
                             Guid newId = Guid.NewGuid();
                             Logs.logger.Debug("Начинаем транзакцию на добавление хэштега {0} в систему и привязку его к посту с id = {1} в базе данных", post.Hashtags[counter], post.Id);
-                            command.CommandText = @"BEGIN TRANSACTION
-                                                    INSERT INTO hashtags (id, text) VALUES (@hashtag_id, @text)
-                                                    INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id, @post_id)
-                                                COMMIT";
-                            command.Parameters.AddWithValue("@hashtag_id", newId);
-                            command.Parameters.AddWithValue("@text", post.Hashtags[counter]);
-                            command.Parameters.AddWithValue("@post_id", post.Id);
+                            command.CommandText = string.Format(@"BEGIN TRANSACTION
+                                                    INSERT INTO hashtags (id, text) VALUES (@hashtag_id{0}, @text{0})
+                                                    INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id{0}, @post_id{0})
+                                                COMMIT", counter);
+                            command.Parameters.AddWithValue(string.Format("@hashtag_id{0}", counter), newId);
+                            command.Parameters.AddWithValue(string.Format("@text{0}", counter), post.Hashtags[counter]);
+                            command.Parameters.AddWithValue(string.Format("@post_id{0}", counter), post.Id);
                             command.ExecuteNonQuery();
                             Logs.logger.Info("Хэштег добавлен в систему: id = {0}, text = {1}", newId, post.Hashtags[counter]);
                             Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);

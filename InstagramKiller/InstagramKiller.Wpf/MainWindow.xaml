@@ -1,0 +1,25 @@
+﻿<Window x:Class="InstagramKiller.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:InstagramKiller.Wpf"
+        mc:Ignorable="d"
+        Title="InstagramKiller" Height="550" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Image x:Name="image" Grid.Row="0" HorizontalAlignment="Stretch"  Margin="10" VerticalAlignment="Stretch" Source="{Binding FileName}" />
+        <StackPanel Grid.Row="1">
+            <Label Content="Add Hashtags" HorizontalAlignment="Center" Margin="5"></Label>
+            <TextBox Width="200" Margin="5" Text="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Open File" Width="80" Margin="5" Command="{Binding OpenFile}"></Button>
+                <Button Content="Add Post" Width="80" Margin="5" Command="{Binding AddPost}"></Button>
+            </StackPanel>
+            <Label Content="{Binding FileName}" HorizontalAlignment="Center" Margin="5"></Label>
+        </StackPanel>
+    </Grid>
+</Window>
