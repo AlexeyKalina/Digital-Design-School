@@ -44,5 +44,10 @@ namespace InstagramKiller.Wpf
             var result = _client.GetAsync(string.Format("{0}/api/posts/search/{1}", _connectionString, hashtag)).Result;
             return result.Content.ReadAsAsync<List<Post>>().Result;
         }
+        public List<Comment> GetPostComments(Guid id)
+        {
+            var result = _client.GetAsync(string.Format("{0}/api/posts/{1}/comments", _connectionString, id)).Result;
+            return result.Content.ReadAsAsync<List<Comment>>().Result;
+        }
     }
 }

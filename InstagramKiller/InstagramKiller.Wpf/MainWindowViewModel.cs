@@ -145,10 +145,26 @@ namespace InstagramKiller.Wpf
                 image.Freeze();
                 User user = _httpClient.GetUserById(post.UserId);
 
-                postViews.Add(new PostView() { Source = image, Date = post.Date.ToString(), UserName = user.Login, Hashtags = "hashtags: " + string.Join(", ", post.Hashtags) });
+                ObservableCollection<CommentView> comments = GetCommentsByPost(post);
+
+                postViews.Add(new PostView() { Source = image, Date = post.Date.ToString(), UserName = user.Login, Hashtags = "hashtags: " + string.Join(", ", post.Hashtags), Comments = comments });
             }
             return postViews;
         }
+
+        private ObservableCollection<CommentView> GetCommentsByPost(Post post)
+        {
+            List<Comment> comments = _httpClient.GetPostComments(post.Id);
+            ObservableCollection<CommentView> resultComments = new ObservableCollection<CommentView>();
+            foreach (var comment in comments)
+            {
+                User user = _httpClient.GetUserById(comment.UserId);
+
+                resultComments.Add(new CommentView() { UserName = user.Login, Text = comment.Text});
+            }
+            return resultComments;
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -162,5 +178,11 @@ namespace InstagramKiller.Wpf
         public string Date { get; set; }
         public string UserName { get; set; }
         public string Hashtags { get; set; }
+        public ObservableCollection<CommentView> Comments { get; set; }
+    }
+    public struct CommentView
+    {
+        public string UserName { get; set; }
+        public string Text { get; set; }
     }
 }

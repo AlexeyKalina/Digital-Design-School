@@ -28,6 +28,21 @@
                                 </StackPanel>
                                 <Image Margin="5" Source="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Label HorizontalAlignment="Center" Content="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ListView ItemsSource="{Binding Comments}">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Focusable" Value="false"/>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <Label Content="{Binding UserName}" />
+                                                <Label Content="{Binding Text}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
