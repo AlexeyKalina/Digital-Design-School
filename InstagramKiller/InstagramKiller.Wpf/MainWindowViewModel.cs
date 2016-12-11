@@ -23,6 +23,10 @@ namespace InstagramKiller.Wpf
         private string _hashtags = "";
         private string _hashtagSearch;
         private ObservableCollection<PostView> _posts;
+        public MainWindowViewModel()
+        {
+            _posts = CreatePostViewByPost(_httpClient.GetLatestPosts());
+        }
         public string Hashtags
         {
             get

@@ -28,21 +28,20 @@
                                 </StackPanel>
                                 <Image Margin="5" Source="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Label HorizontalAlignment="Center" Content="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"/>
-                                <ListView ItemsSource="{Binding Comments}">
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="ListViewItem">
-                                            <Setter Property="Focusable" Value="false"/>
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
-                                    <ListView.ItemTemplate>
+                                <ItemsControl ItemsSource="{Binding Comments}">
+                                    <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                 <Label Content="{Binding UserName}" />
                                                 <Label Content="{Binding Text}"/>
                                             </StackPanel>
                                         </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                                    <Button Content="Add Comment" Margin="5"></Button>
+                                    <TextBox HorizontalAlignment="Stretch" Margin="5" ></TextBox>
+                                </DockPanel>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
@@ -62,15 +61,15 @@
                     <ColumnDefinition Width="2*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Button Content="Open File" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" Margin="5" Padding="5" Command="{Binding OpenFile}"></Button>
-                <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Margin="5" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Margin="5" Padding="5" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                 <Label Content="Add Hashtags" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" Margin="5" ></Label>
-                <TextBox HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <TextBox HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1" Margin="5" Padding="5" Text="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
                     <Button Content="Add Post" Padding="5" HorizontalAlignment="Center" Margin="5" Command="{Binding AddPost}"></Button>
                     <Button Content="Refresh" HorizontalAlignment="Center" Padding="5" Margin="5" Command="{Binding GetLatestPosts}"></Button>
                 </StackPanel>
                 <Button Content="Find Posts" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Center" Margin="5" Padding="5" Command="{Binding FindPostsByHashtag}"></Button>
-                <TextBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" Margin="5" Text="{Binding HashtagSearch, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <TextBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" Padding="5" Margin="5" Text="{Binding HashtagSearch, UpdateSourceTrigger=PropertyChanged}"></TextBox>
             </Grid>
         </Border>
     </Grid>
