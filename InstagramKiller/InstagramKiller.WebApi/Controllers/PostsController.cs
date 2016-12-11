@@ -118,7 +118,7 @@ namespace InstagramKiller.WebApi.Controllers
         /// <param name="hashtag">hashtag</param>
         /// <returns></returns>
         [HttpGet]
-        [Route("api/posts/search/hashtag")]
+        [Route("api/posts/search/{hashtag}")]
         public List<Post> FindPostsByHashtag(string hashtag)
         {
             return _dataLayer.FindPostsByHashtag(hashtag);

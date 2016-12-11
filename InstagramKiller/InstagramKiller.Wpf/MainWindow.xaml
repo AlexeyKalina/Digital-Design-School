@@ -5,21 +5,58 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InstagramKiller.Wpf"
         mc:Ignorable="d"
-        Title="InstagramKiller" Height="550" Width="300">
+        Title="InstagramKiller" Height="600" Width="300">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="3*"></RowDefinition>
+            <RowDefinition Height="2.5*"></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
-        <Image x:Name="image" Grid.Row="0" HorizontalAlignment="Stretch"  Margin="10" VerticalAlignment="Stretch" Source="{Binding FileName}" />
-        <StackPanel Grid.Row="1">
-            <Label Content="Add Hashtags" HorizontalAlignment="Center" Margin="5"></Label>
-            <TextBox Width="200" Margin="5" Text="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"></TextBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Open File" Width="80" Margin="5" Command="{Binding OpenFile}"></Button>
-                <Button Content="Add Post" Width="80" Margin="5" Command="{Binding AddPost}"></Button>
-            </StackPanel>
-            <Label Content="{Binding FileName}" HorizontalAlignment="Center" Margin="5"></Label>
-        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl Grid.Row="0" ItemsSource="{Binding Posts, UpdateSourceTrigger=PropertyChanged}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.Resources>
+                    <DataTemplate DataType="{x:Type local:PostView}">
+                        <Border Margin="2,0,2,0" BorderBrush="Silver" BorderThickness="1"  >
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Label HorizontalAlignment="Center" Content="{Binding Date, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Label HorizontalAlignment="Center" Content="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <Image Margin="5" Source="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label HorizontalAlignment="Center" Content="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.Resources>
+            </ItemsControl>
+        </ScrollViewer>
+        <Border Grid.Row="1" Margin="2,2,2,2" BorderBrush="Silver" BorderThickness="1" VerticalAlignment="Bottom" >
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Button Content="Open File" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" Margin="5" Padding="5" Command="{Binding OpenFile}"></Button>
+                <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Margin="5" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <Label Content="Add Hashtags" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" Margin="5" ></Label>
+                <TextBox HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding Hashtags, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                    <Button Content="Add Post" Padding="5" HorizontalAlignment="Center" Margin="5" Command="{Binding AddPost}"></Button>
+                    <Button Content="Refresh" HorizontalAlignment="Center" Padding="5" Margin="5" Command="{Binding GetLatestPosts}"></Button>
+                </StackPanel>
+                <Button Content="Find Posts" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Center" Margin="5" Padding="5" Command="{Binding FindPostsByHashtag}"></Button>
+                <TextBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" Margin="5" Text="{Binding HashtagSearch, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

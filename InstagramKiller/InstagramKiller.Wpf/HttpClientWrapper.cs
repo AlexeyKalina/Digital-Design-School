@@ -29,5 +29,20 @@ namespace InstagramKiller.Wpf
         {
             _client.PostAsJsonAsync(string.Format("{0}/api/posts", _connectionString), post);
         }
+        public User GetUserById(Guid id)
+        {
+            var result = _client.GetAsync(string.Format("{0}/api/users/{1}", _connectionString, id)).Result;
+            return result.Content.ReadAsAsync<User>().Result;
+        }
+        public List<Post> GetLatestPosts(int count=10)
+        {
+            var result = _client.GetAsync(string.Format("{0}/api/posts/latest/{1}", _connectionString, count)).Result;
+            return result.Content.ReadAsAsync<List<Post>>().Result;
+        }
+        public List<Post> FindPostsByHashtag(string hashtag)
+        {
+            var result = _client.GetAsync(string.Format("{0}/api/posts/search/{1}", _connectionString, hashtag)).Result;
+            return result.Content.ReadAsAsync<List<Post>>().Result;
+        }
     }
 }

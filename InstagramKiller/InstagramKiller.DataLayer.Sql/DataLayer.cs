@@ -412,7 +412,7 @@ namespace InstagramKiller.DataLayer.Sql
                 {
                     Logs.logger.Debug("Делаем SELECT запрос на посты с хэштегом {0} в базу данных", hashtag);
                     command.CommandText = @"SELECT posts.id, photo, posts.date, posts.user_id FROM posts JOIN hashtags_posts ON posts.id = hashtags_posts.post_id
-                                            JOIN hashtags ON hashtags_posts.hashtag_id = hashtags.id WHERE text = @text";
+                                            JOIN hashtags ON hashtags_posts.hashtag_id = hashtags.id WHERE text = @text ORDER BY posts.date DESC";
                     command.Parameters.AddWithValue("@text", hashtag);
 
                     using (var reader = command.ExecuteReader())
