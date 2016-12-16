@@ -20,12 +20,13 @@ namespace InstagramKiller.Wpf
     {
         private readonly HttpClientWrapper _httpClient = new HttpClientWrapper("http://localhost:3968/");
         private string _fileName;
-        private string _hashtags = "";
+        private string _hashtags = string.Empty;
         private string _hashtagSearch;
-        private ObservableCollection<PostView> _posts;
+        private ObservableCollection<PostView> _latestPosts;
+        private ObservableCollection<PostView> _foundPosts;
         public MainWindowViewModel()
         {
-            _posts = CreatePostViewByPost(_httpClient.GetLatestPosts());
+            _latestPosts = CreatePostViewByPost(_httpClient.GetLatestPosts());
         }
         public string Hashtags
         {
@@ -63,15 +64,27 @@ namespace InstagramKiller.Wpf
                 OnPropertyChanged();
             }
         }
-        public ObservableCollection<PostView> Posts
+        public ObservableCollection<PostView> LatestPosts
         {
             get
             {
-                return _posts;
+                return _latestPosts;
             }
             set
             {
-                _posts = value;
+                _latestPosts = value;
+                OnPropertyChanged();
+            }
+        }
+        public ObservableCollection<PostView> FoundPosts
+        {
+            get
+            {
+                return _foundPosts;
+            }
+            set
+            {
+                _foundPosts = value;
                 OnPropertyChanged();
             }
         }
@@ -99,7 +112,7 @@ namespace InstagramKiller.Wpf
                 {
                     byte[] bData = File.ReadAllBytes(FileName);
                     _httpClient.AddPost(new Post() { Id = Guid.Empty, Date = DateTime.Now, Hashtags = Hashtags.Split().ToList(), Photo = bData, UserId = Guid.Empty});
-
+                    Hashtags = string.Empty;
                 }, o => true);
             }
         }
@@ -110,7 +123,7 @@ namespace InstagramKiller.Wpf
                 return new CommandWrapper((o) =>
                 {
                     List<Post> posts = _httpClient.GetLatestPosts();
-                    Posts = CreatePostViewByPost(posts);
+                    LatestPosts = CreatePostViewByPost(posts);
                 }, o => true);
             }
         }
@@ -123,7 +136,7 @@ namespace InstagramKiller.Wpf
                     if (!string.IsNullOrEmpty(HashtagSearch))
                     {
                         List<Post> posts = _httpClient.FindPostsByHashtag(HashtagSearch);
-                        Posts = CreatePostViewByPost(posts);
+                        FoundPosts = CreatePostViewByPost(posts);
                     }
                 }, o => true);
             }
