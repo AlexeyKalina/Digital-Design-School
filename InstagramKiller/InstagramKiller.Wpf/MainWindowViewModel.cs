@@ -13,6 +13,7 @@ using System.IO;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
+using System.Windows;
 
 namespace InstagramKiller.Wpf
 {
@@ -22,6 +23,9 @@ namespace InstagramKiller.Wpf
         private string _fileName;
         private string _hashtags = string.Empty;
         private string _hashtagSearch;
+        private Guid _currentId = new Guid("addabb94-1fc5-47e2-91b3-17f8aa797ae3");
+        private string _currentLogin;
+        private string _currentPassword;
         private ObservableCollection<PostView> _latestPosts;
         private ObservableCollection<PostView> _foundPosts;
         public MainWindowViewModel()
@@ -61,6 +65,42 @@ namespace InstagramKiller.Wpf
             set
             {
                 _hashtagSearch = value;
+                OnPropertyChanged();
+            }
+        }
+        public Guid CurrentId
+        {
+            get
+            {
+                return _currentId;
+            }
+            set
+            {
+                _currentId = value;
+                OnPropertyChanged();
+            }
+        }
+        public string CurrentLogin
+        {
+            get
+            {
+                return _currentLogin;
+            }
+            set
+            {
+                _currentLogin = value;
+                OnPropertyChanged();
+            }
+        }
+        public string CurrentPassword
+        {
+            get
+            {
+                return _currentPassword;
+            }
+            set
+            {
+                _currentPassword = value;
                 OnPropertyChanged();
             }
         }
@@ -111,8 +151,44 @@ namespace InstagramKiller.Wpf
                 return new CommandWrapper((o) =>
                 {
                     byte[] bData = File.ReadAllBytes(FileName);
-                    _httpClient.AddPost(new Post() { Id = Guid.Empty, Date = DateTime.Now, Hashtags = Hashtags.Split().ToList(), Photo = bData, UserId = Guid.Empty});
+                    _httpClient.AddPost(new Post() { Id = Guid.Empty, Date = DateTime.Now, Hashtags = Hashtags.Split().ToList(), Photo = bData, UserId = CurrentId});
                     Hashtags = string.Empty;
+                }, o => true);
+            }
+        }
+        public ICommand AddComment
+        {
+            get
+            {
+                return new CommandWrapper((o) =>
+                {
+                    Console.WriteLine(((PostView)((StackPanel)o).DataContext).NewComment);
+                }, o => true);
+            }
+        }
+        public ICommand LogIn
+        {
+            get
+            {
+                return new CommandWrapper((o) =>
+                {
+                    User user = _httpClient.GetUserById(CurrentId);
+                    if (user.Password == CurrentPassword)
+                    {
+                        CurrentLogin = user.Login;
+                        MessageBox.Show(string.Format("Hello, {0}!", CurrentLogin));
+                    }
+                }, o => true);
+            }
+        }
+        public ICommand DeletePost
+        {
+            get
+            {
+                return new CommandWrapper((o) =>
+                {
+                    _httpClient.DeletePost(((PostView)((StackPanel)o).DataContext).Id);
+                    LatestPosts.Remove((PostView)((StackPanel)o).DataContext);
                 }, o => true);
             }
         }
@@ -164,7 +240,7 @@ namespace InstagramKiller.Wpf
 
                 ObservableCollection<CommentView> comments = GetCommentsByPost(post);
 
-                postViews.Add(new PostView() { Source = image, Date = post.Date.ToString(), UserName = user.Login, Hashtags = "hashtags: " + string.Join(", ", post.Hashtags), Comments = comments });
+                postViews.Add(new PostView() { Source = image, Id = post.Id, Date = post.Date.ToString(), UserName = user.Login, Hashtags = "hashtags: " + string.Join(", ", post.Hashtags), Comments = comments });
             }
             return postViews;
         }
@@ -191,10 +267,12 @@ namespace InstagramKiller.Wpf
     }
     public struct PostView
     {
+        public Guid Id { get; set; }
         public BitmapSource Source { get; set; }
         public string Date { get; set; }
         public string UserName { get; set; }
         public string Hashtags { get; set; }
+        public string NewComment { get; set; }
         public ObservableCollection<CommentView> Comments { get; set; }
     }
     public struct CommentView

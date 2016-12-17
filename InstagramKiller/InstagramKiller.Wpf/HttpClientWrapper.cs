@@ -29,6 +29,10 @@ namespace InstagramKiller.Wpf
         {
             _client.PostAsJsonAsync(string.Format("{0}/api/posts", _connectionString), post);
         }
+        public void AddComment(Comment comment, Guid postId)
+        {
+            _client.PostAsJsonAsync(string.Format("{0}/api/posts/{1}/comments", _connectionString, postId), comment);
+        }
         public User GetUserById(Guid id)
         {
             var result = _client.GetAsync(string.Format("{0}/api/users/{1}", _connectionString, id)).Result;
@@ -48,6 +52,10 @@ namespace InstagramKiller.Wpf
         {
             var result = _client.GetAsync(string.Format("{0}/api/posts/{1}/comments", _connectionString, id)).Result;
             return result.Content.ReadAsAsync<List<Comment>>().Result;
+        }
+        public void DeletePost(Guid postId)
+        {
+            _client.DeleteAsync(string.Format("{0}/api/posts/{1}", _connectionString, postId));
         }
     }
 }
