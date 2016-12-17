@@ -70,7 +70,7 @@
                                             </ItemsControl>
                                             <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
                                                 <Button Content="Add Comment" Margin="5" Command="{Binding DataContext.AddComment, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding ElementName=stck}"></Button>
-                                                <TextBox HorizontalAlignment="Stretch" Margin="5" Text="{Binding Path=DataContext.NewComment, RelativeSource={RelativeSource AncestorType=ItemsControl}}"></TextBox>
+                                                <TextBox HorizontalAlignment="Stretch" Margin="5" Text="{Binding NewComment, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                                             </DockPanel>
                                         </StackPanel>
                                     </Border>

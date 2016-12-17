@@ -162,7 +162,9 @@ namespace InstagramKiller.Wpf
             {
                 return new CommandWrapper((o) =>
                 {
-                    Console.WriteLine(((PostView)((StackPanel)o).DataContext).NewComment);
+                    Guid postId = ((PostView)((StackPanel)o).DataContext).Id;
+                    string text = ((PostView)((StackPanel)o).DataContext).NewComment;
+                    _httpClient.AddComment(new Comment() { Id = Guid.NewGuid(), Date = DateTime.Now, PostId = postId, Text = text, UserId = CurrentId }, postId);
                 }, o => true);
             }
         }
