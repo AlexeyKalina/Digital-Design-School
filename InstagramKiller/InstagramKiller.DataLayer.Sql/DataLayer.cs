@@ -10,6 +10,10 @@ namespace InstagramKiller.DataLayer.Sql
     public class DataLayer : IDataLayer
     {
         private readonly string _connectionString;
+        private const int HashtagMaxLength = 15;
+        private const int LoginMaxLength = 12;
+        private const int PasswordMaxLength = 12;
+        private const int CommentMaxLength = 50;
 
         public DataLayer(string connectionString)
         {
@@ -25,14 +29,14 @@ namespace InstagramKiller.DataLayer.Sql
         {
             Logs.logger.Debug("Старт метода AddUser");
             Logs.logger.Debug("Проверяем валидность данных добавляемого пользователя");
-            if (user.Login.Length > 12)
+            if (user.Login.Length > LoginMaxLength)
             {
-                Logs.logger.Error("Невалидный логин. Логин {0} имеет длину {1}, которая больше 12", user.Login, user.Login.Length);
+                Logs.logger.Error("Невалидный логин. Логин {0} имеет длину {1}, которая больше {2}", user.Login, user.Login.Length, LoginMaxLength);
                 throw new ArgumentException("Login is not valid");
             }
-            if (user.Password.Length > 12)
+            if (user.Password.Length > PasswordMaxLength)
             {
-                Logs.logger.Error("Невалидный пароль. Пароль {0} имеет длину {1}, которая больше 12", user.Password, user.Password.Length);
+                Logs.logger.Error("Невалидный пароль. Пароль {0} имеет длину {1}, которая больше {2}", user.Password, user.Password.Length, PasswordMaxLength);
                 throw new ArgumentException("Password is not valid");
             }
             if (UserWithLoginExist(user.Login))
@@ -99,9 +103,9 @@ namespace InstagramKiller.DataLayer.Sql
         {
             Logs.logger.Debug("Старт метода AddPost");
             Logs.logger.Debug("Проверяем валидность данных добавляемого поста");
-            if (post.Hashtags == null || post.Hashtags.Any(h => h.Length > 12))
+            if (post.Hashtags == null || post.Hashtags.Any(h => h.Length > HashtagMaxLength))
             {
-                Logs.logger.Debug("Невалидный список хэштегов. Содержится хэштег {0}, имеющий длину больше 12", post.Hashtags.Find(h => h.Length > 12));
+                Logs.logger.Debug("Невалидный список хэштегов. Содержится хэштег {0}, имеющий длину больше {1}", post.Hashtags.Find(h => h.Length > HashtagMaxLength), HashtagMaxLength);
                 throw new ArgumentException("Hashtags are not valid");
             }
             Logs.logger.Debug("Проверяем наличие пользователя, к которому добавляем пост");
@@ -175,9 +179,9 @@ namespace InstagramKiller.DataLayer.Sql
         {
             Logs.logger.Debug("Старт метода AddCommentToPost с postId = {0}", postId);
             Logs.logger.Debug("Проверяем валидность коммента");
-            if (comment.Text.Length > 50)
+            if (comment.Text.Length > CommentMaxLength)
             {
-                Logs.logger.Error("Невалидный текст комментария. Текст \"{0}\" имеет длину {1}, которая больше 50", comment.Text, comment.Text.Length);
+                Logs.logger.Error("Невалидный текст комментария. Текст \"{0}\" имеет длину {1}, которая больше {2}", comment.Text, comment.Text.Length, CommentMaxLength);
                 throw new ArgumentException("Text is not valid");
             }
             Logs.logger.Debug("Проверяем наличие поста, к которому добавляем комментарий");

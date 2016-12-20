@@ -24,8 +24,8 @@ namespace InstagramKiller.Wpf
         private string _hashtags = string.Empty;
         private string _hashtagSearch;
         private Guid _currentId = new Guid("addabb94-1fc5-47e2-91b3-17f8aa797ae3");
-        private string _currentLogin;
-        private string _currentPassword;
+        private string _currentLogin = "alexey96";
+        private string _currentPassword = "1234";
         private ObservableCollection<PostView> _latestPosts;
         private ObservableCollection<PostView> _foundPosts;
         public MainWindowViewModel()
@@ -162,9 +162,9 @@ namespace InstagramKiller.Wpf
             {
                 return new CommandWrapper((o) =>
                 {
-                    Guid postId = ((PostView)((StackPanel)o).DataContext).Id;
-                    string text = ((PostView)((StackPanel)o).DataContext).NewComment;
-                    _httpClient.AddComment(new Comment() { Id = Guid.NewGuid(), Date = DateTime.Now, PostId = postId, Text = text, UserId = CurrentId }, postId);
+                    PostView post = (PostView)((StackPanel)o).DataContext;
+                    _httpClient.AddComment(new Comment() { Id = Guid.NewGuid(), Date = DateTime.Now, PostId = post.Id, Text = post.NewComment, UserId = CurrentId }, post.Id);
+                    post.Comments.Add(new CommentView() { UserName = CurrentLogin, Text = post.NewComment });
                 }, o => true);
             }
         }
@@ -189,8 +189,9 @@ namespace InstagramKiller.Wpf
             {
                 return new CommandWrapper((o) =>
                 {
-                    _httpClient.DeletePost(((PostView)((StackPanel)o).DataContext).Id);
-                    LatestPosts.Remove((PostView)((StackPanel)o).DataContext);
+                    PostView post = (PostView)((StackPanel)o).DataContext;
+                    _httpClient.DeletePost(post.Id);
+                    LatestPosts.Remove(LatestPosts.First(p => p.Id == post.Id));
                 }, o => true);
             }
         }
