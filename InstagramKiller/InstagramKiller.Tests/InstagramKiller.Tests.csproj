@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>InstagramKiller.Tests</RootNamespace>
     <AssemblyName>InstagramKiller.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -16,6 +16,7 @@
     <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
     <IsCodedUITest>False</IsCodedUITest>
     <TestProjectType>UnitTest</TestProjectType>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -56,6 +57,10 @@
     <Compile Include="DataLayerSqlTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\InstagramKiller.Cache\InstagramKiller.Cache.csproj">
+      <Project>{26b0e0ef-fa46-4225-843e-208ac01a32f4}</Project>
+      <Name>InstagramKiller.Cache</Name>
+    </ProjectReference>
     <ProjectReference Include="..\InstagramKiller.DataLayer.Sql\InstagramKiller.DataLayer.Sql.csproj">
       <Project>{6ffd2143-f860-4378-b22c-bbd2d49ef1d0}</Project>
       <Name>InstagramKiller.DataLayer.Sql</Name>

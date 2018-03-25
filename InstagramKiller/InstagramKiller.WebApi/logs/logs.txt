@@ -1,0 +1,126 @@
+2018-03-25 13:51:30.1169|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetLatestPosts с количеством постов = 10
+2018-03-25 13:51:38.7670|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:51:38.8120|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на посты в базу данных
+2018-03-25 13:51:39.0440|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем посты
+2018-03-25 13:51:39.0440|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:51:42.4193|INFO|InstagramKiller.Utils.Logs|Пост получен: id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42, date = 3/24/2018 11:34:20 AM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:51:42.4315|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetLatestPosts
+2018-03-25 13:51:43.1283|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:51:43.2213|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:51:43.2213|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:51:43.2213|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:51:43.2213|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:51:43.2213|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на пост в базу данных
+2018-03-25 13:51:43.2403|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:51:43.2413|INFO|InstagramKiller.Utils.Logs|Пост получен: id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42, date = 3/24/2018 11:34:20 AM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:51:43.2413|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPost
+2018-03-25 13:51:45.7884|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:51:45.7884|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:51:45.8536|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:51:45.8536|INFO|InstagramKiller.Utils.Logs|Комментарий поста с id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42 получен: id = 6701933a-4258-4006-b3e5-0d7e9ad1cb24, text = cool, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3, date = 3/24/2018 11:34:57 AM
+2018-03-25 13:51:45.8536|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:51:45.9954|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Старт метода AddPost
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Проверяем валидность данных добавляемого поста
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие пользователя, к которому добавляем пост
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:52:48.4355|DEBUG|InstagramKiller.Utils.Logs|Делаем запрос на добавление поста в базу данных
+2018-03-25 13:52:48.5805|INFO|InstagramKiller.Utils.Logs|Пост добавлен: id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0, date = 3/25/2018 1:52:48 PM, user_id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:48.5805|DEBUG|InstagramKiller.Utils.Logs|Старт метода AddHashtagsToPost
+2018-03-25 13:52:48.5914|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:52:48.6014|DEBUG|InstagramKiller.Utils.Logs|В цикле обрабатываем хэштеги
+2018-03-25 13:52:48.6014|DEBUG|InstagramKiller.Utils.Logs|Отправляем SELECT запрос по хэштегу с текстом book в базу данных
+2018-03-25 13:52:48.6794|DEBUG|InstagramKiller.Utils.Logs|Хэштега book в системе нет
+2018-03-25 13:52:48.6794|DEBUG|InstagramKiller.Utils.Logs|Начинаем транзакцию на добавление хэштега book в систему и привязку его к посту с id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0 в базе данных
+2018-03-25 13:52:48.7254|INFO|InstagramKiller.Utils.Logs|Хэштег добавлен в систему: id = 97154985-58f3-4ef6-a41e-7ac5c757e501, text = book
+2018-03-25 13:52:48.7254|INFO|InstagramKiller.Utils.Logs|Хэштег book добавлен к посту с id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:48.7254|DEBUG|InstagramKiller.Utils.Logs|Отправляем SELECT запрос по хэштегу с текстом code в базу данных
+2018-03-25 13:52:48.7464|DEBUG|InstagramKiller.Utils.Logs|Хэштега code в системе нет
+2018-03-25 13:52:48.7464|DEBUG|InstagramKiller.Utils.Logs|Начинаем транзакцию на добавление хэштега code в систему и привязку его к посту с id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0 в базе данных
+2018-03-25 13:52:48.7695|INFO|InstagramKiller.Utils.Logs|Хэштег добавлен в систему: id = 02cdc7b6-d6e2-42f0-a757-b99a4981ce23, text = code
+2018-03-25 13:52:48.7695|INFO|InstagramKiller.Utils.Logs|Хэштег code добавлен к посту с id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:48.7695|DEBUG|InstagramKiller.Utils.Logs|Выход из метода AddHashtagsToPost
+2018-03-25 13:52:48.7695|INFO|InstagramKiller.Utils.Logs|Хэштеги добавлены к посту с id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:48.7695|DEBUG|InstagramKiller.Utils.Logs|Выход из метода AddPost
+2018-03-25 13:52:52.5644|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetLatestPosts с количеством постов = 10
+2018-03-25 13:52:52.5644|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:52:52.5644|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на посты в базу данных
+2018-03-25 13:52:52.5854|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем посты
+2018-03-25 13:52:52.5854|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:52.5854|INFO|InstagramKiller.Utils.Logs|Пост получен: id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0, date = 3/25/2018 1:52:48 PM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:52.5854|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:52:52.5854|INFO|InstagramKiller.Utils.Logs|Пост получен: id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42, date = 3/24/2018 11:34:20 AM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:52.5854|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetLatestPosts
+2018-03-25 13:52:52.7614|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:52.7884|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:52.7884|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:52:52.7884|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:52:52.7884|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:52:52.7884|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:52:52.8104|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:52:52.8104|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:52:52.9075|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:52:52.9574|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:52:52.9574|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:52:52.9574|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:52:52.9861|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:52:52.9861|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:52:53.0055|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:52:53.0055|INFO|InstagramKiller.Utils.Logs|Комментарий поста с id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42 получен: id = 6701933a-4258-4006-b3e5-0d7e9ad1cb24, text = cool, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3, date = 3/24/2018 11:34:57 AM
+2018-03-25 13:52:53.0055|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:52:53.0584|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:04.6564|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetLatestPosts с количеством постов = 10
+2018-03-25 13:53:04.6564|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:04.6564|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на посты в базу данных
+2018-03-25 13:53:04.6794|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем посты
+2018-03-25 13:53:04.6794|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:04.6794|INFO|InstagramKiller.Utils.Logs|Пост получен: id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0, date = 3/25/2018 1:52:48 PM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:04.6794|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:04.7414|INFO|InstagramKiller.Utils.Logs|Пост получен: id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42, date = 3/24/2018 11:34:20 AM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:04.7414|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetLatestPosts
+2018-03-25 13:53:04.8254|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:04.9109|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:04.9109|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:53:04.9109|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:04.9109|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:04.9109|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:53:04.9324|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:53:04.9324|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:53:05.0244|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:05.0464|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:05.0464|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:53:05.0464|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:05.0604|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:05.0604|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:53:05.0834|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:53:05.0834|INFO|InstagramKiller.Utils.Logs|Комментарий поста с id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42 получен: id = 6701933a-4258-4006-b3e5-0d7e9ad1cb24, text = cool, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3, date = 3/24/2018 11:34:57 AM
+2018-03-25 13:53:05.0834|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:53:05.1166|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:08.1104|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetLatestPosts с количеством постов = 10
+2018-03-25 13:53:08.1104|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:08.1104|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на посты в базу данных
+2018-03-25 13:53:08.1343|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем посты
+2018-03-25 13:53:08.1343|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:08.1343|INFO|InstagramKiller.Utils.Logs|Пост получен: id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0, date = 3/25/2018 1:52:48 PM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:08.1343|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetHashtags с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:08.1343|INFO|InstagramKiller.Utils.Logs|Пост получен: id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42, date = 3/24/2018 11:34:20 AM, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:08.1343|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetLatestPosts
+2018-03-25 13:53:08.2124|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:08.2578|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:08.2578|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:53:08.2578|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = a52c5bc9-cd93-4a8e-8f2f-b03d979fe3a0
+2018-03-25 13:53:08.2578|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:08.2578|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:53:08.2864|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:53:08.2864|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:53:08.3854|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3
+2018-03-25 13:53:08.4344|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPostComments с postId = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:08.4344|DEBUG|InstagramKiller.Utils.Logs|Проверяем наличие поста, комментарии которого получаем
+2018-03-25 13:53:08.4344|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetPost c id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42
+2018-03-25 13:53:08.4484|DEBUG|InstagramKiller.Utils.Logs|Открываем подключение к базе данных
+2018-03-25 13:53:08.4484|DEBUG|InstagramKiller.Utils.Logs|Делаем SELECT запрос на комментарии в базу данных
+2018-03-25 13:53:08.4695|DEBUG|InstagramKiller.Utils.Logs|В цикле считываем комментарии
+2018-03-25 13:53:08.4695|INFO|InstagramKiller.Utils.Logs|Комментарий поста с id = 7490e2f4-8ea7-4897-a476-2e2490a4ef42 получен: id = 6701933a-4258-4006-b3e5-0d7e9ad1cb24, text = cool, userId = addabb94-1fc5-47e2-91b3-17f8aa797ae3, date = 3/24/2018 11:34:57 AM
+2018-03-25 13:53:08.4695|DEBUG|InstagramKiller.Utils.Logs|Выход из метода GetPostComment
+2018-03-25 13:53:08.5019|DEBUG|InstagramKiller.Utils.Logs|Старт метода GetUser с id = addabb94-1fc5-47e2-91b3-17f8aa797ae3

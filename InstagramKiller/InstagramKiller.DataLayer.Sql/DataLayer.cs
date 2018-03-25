@@ -3,670 +3,726 @@ using System.Collections.Generic;
 using System.Linq;
 using InstagramKiller.Model;
 using System.Data.SqlClient;
+using InstagramKiller.Cache;
 using InstagramKiller.Utils;
 
 namespace InstagramKiller.DataLayer.Sql
 {
-    public class DataLayer : IDataLayer
-    {
-        private readonly string _connectionString;
-        private const int HashtagMaxLength = 15;
-        private const int LoginMaxLength = 12;
-        private const int PasswordMaxLength = 12;
-        private const int CommentMaxLength = 50;
+	public class DataLayer : IDataLayer
+	{
+		private readonly string _connectionString;
+		private const int HashtagMaxLength = 15;
+		private const int LoginMaxLength = 12;
+		private const int PasswordMaxLength = 12;
+		private const int CommentMaxLength = 50;
+		private readonly ICacheProvider _cacheProvider;
 
-        public DataLayer(string connectionString)
-        {
-            if (connectionString == null)
-            {
-                throw new ArgumentNullException(nameof(connectionString));
-            }
+		public DataLayer(string connectionString, ICacheProvider cacheProvider)
+		{
+			_connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+			_cacheProvider = cacheProvider ?? throw new ArgumentNullException(nameof(cacheProvider));
+		}
 
-            _connectionString = connectionString;
-        }
+		public User AddUser(User user)
+		{
+			Logs.logger.Debug("Старт метода AddUser");
+			Logs.logger.Debug("Проверяем валидность данных добавляемого пользователя");
+			if (user.Login.Length > LoginMaxLength)
+			{
+				Logs.logger.Error("Невалидный логин. Логин {0} имеет длину {1}, которая больше {2}", user.Login, user.Login.Length, LoginMaxLength);
+				throw new ArgumentException("Login is not valid");
+			}
+			if (user.Password.Length > PasswordMaxLength)
+			{
+				Logs.logger.Error("Невалидный пароль. Пароль {0} имеет длину {1}, которая больше {2}", user.Password, user.Password.Length, PasswordMaxLength);
+				throw new ArgumentException("Password is not valid");
+			}
+			if (UserWithLoginExist(user.Login))
+			{
+				Logs.logger.Error("Невалидный логин. Логин {0} уже существует в системе.", user.Login);
+				throw new ArgumentException("User with this login already exists");
+			}
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-        public User AddUser(User user)
-        {
-            Logs.logger.Debug("Старт метода AddUser");
-            Logs.logger.Debug("Проверяем валидность данных добавляемого пользователя");
-            if (user.Login.Length > LoginMaxLength)
-            {
-                Logs.logger.Error("Невалидный логин. Логин {0} имеет длину {1}, которая больше {2}", user.Login, user.Login.Length, LoginMaxLength);
-                throw new ArgumentException("Login is not valid");
-            }
-            if (user.Password.Length > PasswordMaxLength)
-            {
-                Logs.logger.Error("Невалидный пароль. Пароль {0} имеет длину {1}, которая больше {2}", user.Password, user.Password.Length, PasswordMaxLength);
-                throw new ArgumentException("Password is not valid");
-            }
-            if (UserWithLoginExist(user.Login))
-            {
-                Logs.logger.Error("Невалидный логин. Логин {0} уже существует в системе.", user.Login);
-                throw new ArgumentException("User with this login already exists");
-            }
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем запрос на добавление пользователя в базу данных");
+					user.Id = Guid.NewGuid();
+					command.CommandText = "INSERT INTO users (id, login, password) VALUES (@id, @login, @password)";
+					command.Parameters.AddWithValue("@id", user.Id);
+					command.Parameters.AddWithValue("@login", user.Login);
+					command.Parameters.AddWithValue("@password", user.Password);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Пользователь добавлен: id = {0}, login = {1}, password = {2}", user.Id, user.Login, user.Password);
+					Logs.logger.Debug("Выход из метода AddUser");
+					return user;
+				}
+			}
+		}
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем запрос на добавление пользователя в базу данных");
-                    user.Id = Guid.NewGuid();
-                    command.CommandText = "INSERT INTO users (id, login, password) VALUES (@id, @login, @password)";
-                    command.Parameters.AddWithValue("@id", user.Id);
-                    command.Parameters.AddWithValue("@login", user.Login);
-                    command.Parameters.AddWithValue("@password", user.Password);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Пользователь добавлен: id = {0}, login = {1}, password = {2}", user.Id, user.Login, user.Password);
-                    Logs.logger.Debug("Выход из метода AddUser");
-                    return user;
-                }
-            }
-        }
+		public User GetUser(Guid id)
+		{
+			Logs.logger.Debug("Старт метода GetUser с id = {0}", id);
 
-        public User GetUser(Guid id)
-        {
-            Logs.logger.Debug("Старт метода GetUser с id = {0}", id);
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			if (_cacheProvider.TryGet(Scheme.Users(id), out User cachedUser))
+				return cachedUser;
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на пользователя в базу данных");
-                    command.CommandText = "SELECT id, login, password FROM users WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", id);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            Logs.logger.Info("Пользователь получен: id = {0}, login = {1}, password = {2}", id, reader.GetString(1), reader.GetString(2));
-                            Logs.logger.Debug("Выход из метода GetUser");
-                            return new User
-                            {
-                                Id = reader.GetGuid(0),
-                                Login = reader.GetString(1),
-                                Password = reader.GetString(2)
-                            };
-                        }
-                        Logs.logger.Error("Пользователь с id = {0} отсутствует в системе", id);
-                        throw new ArgumentException("User with id not exists");
-                    }
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на пользователя в базу данных");
+					command.CommandText = "SELECT id, login, password FROM users WHERE id = @id";
+					command.Parameters.AddWithValue("@id", id);
 
-        public Post AddPost(Post post)
-        {
-            Logs.logger.Debug("Старт метода AddPost");
-            Logs.logger.Debug("Проверяем валидность данных добавляемого поста");
-            if (post.Hashtags == null || post.Hashtags.Any(h => h.Length > HashtagMaxLength))
-            {
-                Logs.logger.Debug("Невалидный список хэштегов. Содержится хэштег {0}, имеющий длину больше {1}", post.Hashtags.Find(h => h.Length > HashtagMaxLength), HashtagMaxLength);
-                throw new ArgumentException("Hashtags are not valid");
-            }
-            Logs.logger.Debug("Проверяем наличие пользователя, к которому добавляем пост");
-            GetUser(post.UserId);
+					using (var reader = command.ExecuteReader())
+					{
+						if (reader.Read())
+						{
+							Logs.logger.Info("Пользователь получен: id = {0}, login = {1}, password = {2}", id, reader.GetString(1), reader.GetString(2));
+							Logs.logger.Debug("Выход из метода GetUser");
+							var user = new User
+							{
+								Id = reader.GetGuid(0),
+								Login = reader.GetString(1),
+								Password = reader.GetString(2)
+							};
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+							_cacheProvider.Add(Scheme.Users(user.Id), user);
+							return user;
+						}
+						Logs.logger.Error("Пользователь с id = {0} отсутствует в системе", id);
+						throw new ArgumentException("User with id not exists");
+					}
+				}
+			}
+		}
 
-                using (var command = connection.CreateCommand())
-                {
-                    post.Id = Guid.NewGuid();
-                    post.Date = DateTime.Now;
+		public Post AddPost(Post post)
+		{
+			Logs.logger.Debug("Старт метода AddPost");
+			Logs.logger.Debug("Проверяем валидность данных добавляемого поста");
+			if (post.Hashtags == null)
+			{
+				Logs.logger.Debug("Список хэштегов для поста {0} равен null", post.Id);
+				throw new ArgumentNullException(nameof(post.Hashtags));
+			}
+			if (post.Hashtags.Any(h => h.Length > HashtagMaxLength))
+			{
+				Logs.logger.Debug("Невалидный список хэштегов. Содержится хэштег {0}, имеющий длину больше {1}", post.Hashtags.Find(h => h.Length > HashtagMaxLength), HashtagMaxLength);
+				throw new ArgumentException("Hashtags are not valid");
+			}
+			Logs.logger.Debug("Проверяем наличие пользователя, к которому добавляем пост");
+			GetUser(post.UserId);
 
-                    Logs.logger.Debug("Делаем запрос на добавление поста в базу данных");
-                    command.CommandText = "INSERT INTO posts (id, photo, date, user_id) VALUES (@id, @photo, @date, @user_id)";
-                    command.Parameters.AddWithValue("@id", post.Id);
-                    command.Parameters.AddWithValue("@photo", post.Photo);
-                    command.Parameters.AddWithValue("@date", post.Date);
-                    command.Parameters.AddWithValue("@user_id", post.UserId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Пост добавлен: id = {0}, date = {1}, user_id = {2}", post.Id, post.Date, post.UserId);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                    AddHashtagsToPost(post);
-                    Logs.logger.Info("Хэштеги добавлены к посту с id = {0}", post.Id);
-                    Logs.logger.Debug("Выход из метода AddPost");
-                    return post;
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					post.Id = Guid.NewGuid();
+					post.Date = DateTime.Now;
 
-        public Post GetPost(Guid postId)
-        {
-            Logs.logger.Debug("Старт метода GetPost c id = {0}", postId);
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+					Logs.logger.Debug("Делаем запрос на добавление поста в базу данных");
+					command.CommandText = "INSERT INTO posts (id, photo, date, user_id) VALUES (@id, @photo, @date, @user_id)";
+					command.Parameters.AddWithValue("@id", post.Id);
+					command.Parameters.AddWithValue("@photo", post.Photo);
+					command.Parameters.AddWithValue("@date", post.Date);
+					command.Parameters.AddWithValue("@user_id", post.UserId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Пост добавлен: id = {0}, date = {1}, user_id = {2}", post.Id, post.Date, post.UserId);
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на пост в базу данных");
-                    command.CommandText = "SELECT id, photo, date, user_id FROM posts WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", postId);
+					AddHashtagsToPost(post);
+					Logs.logger.Info("Хэштеги добавлены к посту с id = {0}", post.Id);
+					Logs.logger.Debug("Выход из метода AddPost");
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            List<string> hashtags = GetHashtags(postId);
-                            Logs.logger.Info("Пост получен: id = {0}, date = {1}, userId = {2}", postId, reader.GetDateTime(2), reader.GetGuid(3));
-                            Logs.logger.Debug("Выход из метода GetPost");
-                            return new Post
-                            {
-                                Id = reader.GetGuid(0),
-                                Photo = (byte[])reader["photo"],
-                                Date = reader.GetDateTime(2),
-                                UserId = reader.GetGuid(3),
-                                Hashtags = hashtags
-                            };
-                        }
-                        Logs.logger.Error("Пост с id = {0} отсутствует в системе", postId);
-                        throw new ArgumentException("Post with id not exists");
-                    }
-                }
-            }
-        }
+					_cacheProvider.Add(Scheme.Posts(post.Id), post);
+					_cacheProvider.AddGuidListAndTrim(Scheme.LatestPosts(), 5, post.Id);
+					return post;
+				}
+			}
+		}
 
-        public Comment AddCommentToPost(Comment comment, Guid postId)
-        {
-            Logs.logger.Debug("Старт метода AddCommentToPost с postId = {0}", postId);
-            Logs.logger.Debug("Проверяем валидность коммента");
-            if (comment.Text.Length > CommentMaxLength)
-            {
-                Logs.logger.Error("Невалидный текст комментария. Текст \"{0}\" имеет длину {1}, которая больше {2}", comment.Text, comment.Text.Length, CommentMaxLength);
-                throw new ArgumentException("Text is not valid");
-            }
-            Logs.logger.Debug("Проверяем наличие поста, к которому добавляем комментарий");
-            Post post = GetPost(postId);
+		public Post GetPost(Guid postId)
+		{
+			Logs.logger.Debug("Старт метода GetPost c id = {0}", postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			if (_cacheProvider.TryGet(Scheme.Posts(postId), out Post cachedPost))
+				return cachedPost;
 
-                using (var command = connection.CreateCommand())
-                {
-                    comment.Id = Guid.NewGuid();
-                    comment.Date = DateTime.Now;
-                    comment.PostId = post.Id;
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                    Logs.logger.Debug("Делаем запрос на добавление комментария в базу данных");
-                    command.CommandText = "INSERT INTO comments (id, text, user_id, post_id, date) VALUES (@id, @text, @user_id, @post_id, @date)";
-                    command.Parameters.AddWithValue("@id", comment.Id);
-                    command.Parameters.AddWithValue("@text", comment.Text);
-                    command.Parameters.AddWithValue("@user_id", comment.UserId);
-                    command.Parameters.AddWithValue("@post_id", post.Id);
-                    command.Parameters.AddWithValue("@date", comment.Date);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Комментарий добавлен: id = {0}, text = {1}, userId = {2}, postId = {3}, date = {4}", comment.Id, comment.Text, comment.UserId, comment.PostId, comment.Date);
-                    Logs.logger.Debug("Выход из метода AddCommentToPost");
-                    return comment;
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на пост в базу данных");
+					command.CommandText = "SELECT id, photo, date, user_id FROM posts WHERE id = @id";
+					command.Parameters.AddWithValue("@id", postId);
 
-        public Comment GetComment(Guid commentId)
-        {
-            Logs.logger.Debug("Старт метода GetComment с id = {0}", commentId);
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+					using (var reader = command.ExecuteReader())
+					{
+						if (reader.Read())
+						{
+							var hashtags = GetHashtags(postId);
+							Logs.logger.Info("Пост получен: id = {0}, date = {1}, userId = {2}", postId, reader.GetDateTime(2), reader.GetGuid(3));
+							Logs.logger.Debug("Выход из метода GetPost");
+							var post = new Post
+							{
+								Id = reader.GetGuid(0),
+								Photo = (byte[])reader["photo"],
+								Date = reader.GetDateTime(2),
+								UserId = reader.GetGuid(3),
+								Hashtags = hashtags
+							};
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на комментарий в базу данных");
-                    command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", commentId);
+							_cacheProvider.Add(Scheme.Posts(post.Id), post);
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            Logs.logger.Info("Комментарий получен: id = {0}, text = {1}, userId = {2}, postId = {3}, date = {4}", reader.GetGuid(0), reader.GetString(1), reader.GetGuid(2), reader.GetGuid(3), reader.GetDateTime(4));
-                            Logs.logger.Debug("Выход из метода GetComment");
-                            return new Comment
-                            {
-                                Id = reader.GetGuid(0),
-                                Text = reader.GetString(1),
-                                UserId = reader.GetGuid(2),
-                                PostId = reader.GetGuid(3),
-                                Date = reader.GetDateTime(4)
-                            };
-                        }
-                        Logs.logger.Error("Комментарий с id = {0} отсутствует в системе", commentId);
-                        throw new ArgumentException("Comment with id not exists");
-                    }
-                }
-            }
-        }
+							return post;
+						}
+						Logs.logger.Error("Пост с id = {0} отсутствует в системе", postId);
+						throw new ArgumentException("Post with id not exists");
+					}
+				}
+			}
+		}
 
-        public void DeleteUser(Guid userId)
-        {
-            Logs.logger.Debug("Старт метода DeleteUser с id = {0}", userId);
-            Logs.logger.Debug("Проверяем наличие пользователя в системе");
-            GetUser(userId);
+		public Comment AddCommentToPost(Comment comment, Guid postId)
+		{
+			Logs.logger.Debug("Старт метода AddCommentToPost с postId = {0}", postId);
+			Logs.logger.Debug("Проверяем валидность коммента");
+			if (comment.Text.Length > CommentMaxLength)
+			{
+				Logs.logger.Error("Невалидный текст комментария. Текст \"{0}\" имеет длину {1}, которая больше {2}", comment.Text, comment.Text.Length, CommentMaxLength);
+				throw new ArgumentException("Text is not valid");
+			}
+			Logs.logger.Debug("Проверяем наличие поста, к которому добавляем комментарий");
+			Post post = GetPost(postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Начинаем транзакцию на удаление пользователя с id = {0}, лайков и комментариев, которые он оставил", userId);
-                    command.CommandText = @"BEGIN TRANSACTION
+				using (var command = connection.CreateCommand())
+				{
+					comment.Id = Guid.NewGuid();
+					comment.Date = DateTime.Now;
+					comment.PostId = post.Id;
+
+					Logs.logger.Debug("Делаем запрос на добавление комментария в базу данных");
+					command.CommandText = "INSERT INTO comments (id, text, user_id, post_id, date) VALUES (@id, @text, @user_id, @post_id, @date)";
+					command.Parameters.AddWithValue("@id", comment.Id);
+					command.Parameters.AddWithValue("@text", comment.Text);
+					command.Parameters.AddWithValue("@user_id", comment.UserId);
+					command.Parameters.AddWithValue("@post_id", post.Id);
+					command.Parameters.AddWithValue("@date", comment.Date);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Комментарий добавлен: id = {0}, text = {1}, userId = {2}, postId = {3}, date = {4}", comment.Id, comment.Text, comment.UserId, comment.PostId, comment.Date);
+					Logs.logger.Debug("Выход из метода AddCommentToPost");
+					return comment;
+				}
+			}
+		}
+
+		public Comment GetComment(Guid commentId)
+		{
+			Logs.logger.Debug("Старт метода GetComment с id = {0}", commentId);
+
+			if (_cacheProvider.TryGet(Scheme.Comments(commentId), out Comment cachedComment))
+				return cachedComment;
+
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
+
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на комментарий в базу данных");
+					command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE id = @id";
+					command.Parameters.AddWithValue("@id", commentId);
+
+					using (var reader = command.ExecuteReader())
+					{
+						if (reader.Read())
+						{
+							Logs.logger.Info("Комментарий получен: id = {0}, text = {1}, userId = {2}, postId = {3}, date = {4}", reader.GetGuid(0), reader.GetString(1), reader.GetGuid(2), reader.GetGuid(3), reader.GetDateTime(4));
+							Logs.logger.Debug("Выход из метода GetComment");
+							var comment = new Comment
+							{
+								Id = reader.GetGuid(0),
+								Text = reader.GetString(1),
+								UserId = reader.GetGuid(2),
+								PostId = reader.GetGuid(3),
+								Date = reader.GetDateTime(4)
+							};
+
+							_cacheProvider.Add(Scheme.Comments(comment.Id), comment);
+						}
+						Logs.logger.Error("Комментарий с id = {0} отсутствует в системе", commentId);
+						throw new ArgumentException("Comment with id not exists");
+					}
+				}
+			}
+		}
+
+		public void DeleteUser(Guid userId)
+		{
+			Logs.logger.Debug("Старт метода DeleteUser с id = {0}", userId);
+			Logs.logger.Debug("Проверяем наличие пользователя в системе");
+			GetUser(userId);
+
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
+
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Начинаем транзакцию на удаление пользователя с id = {0}, лайков и комментариев, которые он оставил", userId);
+					command.CommandText = @"BEGIN TRANSACTION
                                                 DELETE FROM comments WHERE user_id = @id;
                                                 DELETE FROM likes WHERE user_id = @id;
                                                 DELETE FROM users WHERE id = @id
                                             COMMIT";
-                    command.Parameters.AddWithValue("@id", userId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Пользователь с id = {0} удален из системы", userId);
-                    Logs.logger.Debug("Выход из метода DeleteUser");
-                }
-            }
-        }
+					command.Parameters.AddWithValue("@id", userId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Пользователь с id = {0} удален из системы", userId);
+					Logs.logger.Debug("Выход из метода DeleteUser");
+				}
+			}
+		}
 
-        public void DeletePost(Guid postId)
-        {
-            Logs.logger.Debug("Старт метода DeletePost с id = {0}", postId);
-            Logs.logger.Debug("Проверяем наличие поста в системе");
-            GetPost(postId);
+		public void DeletePost(Guid postId)
+		{
+			Logs.logger.Debug("Старт метода DeletePost с id = {0}", postId);
+			Logs.logger.Debug("Проверяем наличие поста в системе");
+			GetPost(postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			_cacheProvider.Delete(Scheme.Posts(postId));
+			_cacheProvider.Delete(Scheme.LatestPosts());
+			_cacheProvider.Delete(Scheme.Hashtags(postId));
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем запрос на удаление поста с id = {0} в базу данных", postId);
-                    command.CommandText = @"DELETE FROM posts WHERE id = @id;";
-                    command.Parameters.AddWithValue("@id", postId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Пост с id = {0} удален из системы", postId);
-                    Logs.logger.Debug("Выход из метода DeletePost");
-                }
-            }
-        }
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-        public void DeleteComment(Guid commentId)
-        {
-            Logs.logger.Debug("Старт метода DeleteComment с id = {0}", commentId);
-            Logs.logger.Debug("Проверяем наличие комментария в системе");
-            GetComment(commentId);
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем запрос на удаление поста с id = {0} в базу данных", postId);
+					command.CommandText = @"DELETE FROM posts WHERE id = @id;";
+					command.Parameters.AddWithValue("@id", postId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Пост с id = {0} удален из системы", postId);
+					Logs.logger.Debug("Выход из метода DeletePost");
+				}
+			}
+		}
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+		public void DeleteComment(Guid commentId)
+		{
+			Logs.logger.Debug("Старт метода DeleteComment с id = {0}", commentId);
+			Logs.logger.Debug("Проверяем наличие комментария в системе");
+			GetComment(commentId);
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем запрос на удаление комментария с id = {0} в базу данных", commentId);
-                    command.CommandText = "DELETE FROM comments WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", commentId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Комментарий с id = {0} удален из системы", commentId);
-                    Logs.logger.Debug("Выход из метода DeleteComment");
-                }
-            }
-        }
+			_cacheProvider.Delete(Scheme.Comments(commentId));
 
-        public List<Comment> GetPostComments(Guid postId)
-        {
-            Logs.logger.Debug("Старт метода GetPostComments с postId = {0}", postId);
-            Logs.logger.Debug("Проверяем наличие поста, комментарии которого получаем");
-            GetPost(postId);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-            var comments = new List<Comment>();
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем запрос на удаление комментария с id = {0} в базу данных", commentId);
+					command.CommandText = "DELETE FROM comments WHERE id = @id";
+					command.Parameters.AddWithValue("@id", commentId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Комментарий с id = {0} удален из системы", commentId);
+					Logs.logger.Debug("Выход из метода DeleteComment");
+				}
+			}
+		}
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+		public List<Comment> GetPostComments(Guid postId)
+		{
+			Logs.logger.Debug("Старт метода GetPostComments с postId = {0}", postId);
+			Logs.logger.Debug("Проверяем наличие поста, комментарии которого получаем");
+			GetPost(postId);
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на комментарии в базу данных");
-                    command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE post_id = @id";
-                    command.Parameters.AddWithValue("@id", postId);
+			var comments = new List<Comment>();
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        Logs.logger.Debug("В цикле считываем комментарии");
-                        while (reader.Read())
-                        {
-                            comments.Add(new Comment
-                            {
-                                Id = reader.GetGuid(0),
-                                Text = reader.GetString(1),
-                                UserId = reader.GetGuid(2),
-                                PostId = reader.GetGuid(3),
-                                Date = reader.GetDateTime(4)
-                            });
-                            Logs.logger.Info("Комментарий поста с id = {0} получен: id = {1}, text = {2}, userId = {3}, date = {4}", postId, reader.GetGuid(0), reader.GetString(1), reader.GetGuid(2), reader.GetDateTime(4));
-                        }
-                        Logs.logger.Debug("Выход из метода GetPostComment");
-                        return comments;
-                    }
-                }
-            }
-        }
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-        public List<Post> GetLatestPosts(int count = 5)
-        {
-            Logs.logger.Debug("Старт метода GetLatestPosts с количеством постов = {0}", count);
-            var posts = new List<Post>();
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на комментарии в базу данных");
+					command.CommandText = "SELECT id, text, user_id, post_id, date FROM comments WHERE post_id = @id";
+					command.Parameters.AddWithValue("@id", postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+					using (var reader = command.ExecuteReader())
+					{
+						Logs.logger.Debug("В цикле считываем комментарии");
+						while (reader.Read())
+						{
+							comments.Add(new Comment
+							{
+								Id = reader.GetGuid(0),
+								Text = reader.GetString(1),
+								UserId = reader.GetGuid(2),
+								PostId = reader.GetGuid(3),
+								Date = reader.GetDateTime(4)
+							});
+							Logs.logger.Info("Комментарий поста с id = {0} получен: id = {1}, text = {2}, userId = {3}, date = {4}", postId, reader.GetGuid(0), reader.GetString(1), reader.GetGuid(2), reader.GetDateTime(4));
+						}
+						Logs.logger.Debug("Выход из метода GetPostComment");
+						return comments;
+					}
+				}
+			}
+		}
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на посты в базу данных");
-                    command.CommandText = "SELECT TOP(@count) id, photo, date, user_id FROM posts ORDER BY date DESC";
-                    command.Parameters.AddWithValue("@count", count);
+		public List<Post> GetLatestPosts(int count = 5)
+		{
+			Logs.logger.Debug("Старт метода GetLatestPosts с количеством постов = {0}", count);
+			var posts = new List<Post>();
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        Logs.logger.Debug("В цикле считываем посты");
-                        while (reader.Read())
-                        {
-                            List<string> hashtags = GetHashtags(reader.GetGuid(0));
-                            Logs.logger.Info("Пост получен: id = {0}, date = {1}, userId = {2}", reader.GetGuid(0), reader.GetDateTime(2), reader.GetGuid(3));
-                            posts.Add(new Post
-                            {
-                                Id = reader.GetGuid(0),
-                                Photo = (byte[])reader["photo"],
-                                Date = reader.GetDateTime(2),
-                                UserId = reader.GetGuid(3),
-                                Hashtags = hashtags
-                            });
-                        }
-                        Logs.logger.Debug("Выход из метода GetLatestPosts");
-                        return posts;
-                    }
-                }
-            }
-        }
+			if (_cacheProvider.TryGetGuidList(Scheme.LatestPosts(), count, out List<Guid> guids))
+			{
+				var cachedPosts = new List<Post>();
+				foreach (var guid in guids)
+				{
+					if (_cacheProvider.TryGet(guid.ToString(), out Post cachedPost))
+						cachedPosts.Add(cachedPost);
+				}
+				if (cachedPosts.Count == guids.Count)
+					return cachedPosts;
+			}
 
-        public List<Post> FindPostsByHashtag(string hashtag)
-        {
-            Logs.logger.Debug("Старт метода FindPostsByHashtag с hashtag = {0}", hashtag);
-            var posts = new List<Post>();
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на посты в базу данных");
+					command.CommandText = "SELECT TOP(@count) id, photo, date, user_id FROM posts ORDER BY date DESC";
+					command.Parameters.AddWithValue("@count", count);
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на посты с хэштегом {0} в базу данных", hashtag);
-                    command.CommandText = @"SELECT posts.id, photo, posts.date, posts.user_id FROM posts JOIN hashtags_posts ON posts.id = hashtags_posts.post_id
+					using (var reader = command.ExecuteReader())
+					{
+						Logs.logger.Debug("В цикле считываем посты");
+						while (reader.Read())
+						{
+							var hashtags = GetHashtags(reader.GetGuid(0));
+							Logs.logger.Info("Пост получен: id = {0}, date = {1}, userId = {2}", reader.GetGuid(0), reader.GetDateTime(2), reader.GetGuid(3));
+							posts.Add(new Post
+							{
+								Id = reader.GetGuid(0),
+								Photo = (byte[])reader["photo"],
+								Date = reader.GetDateTime(2),
+								UserId = reader.GetGuid(3),
+								Hashtags = hashtags
+							});
+
+							_cacheProvider.Delete(Scheme.LatestPosts());
+							_cacheProvider.AddGuidListAndTrim(Scheme.LatestPosts(), count, posts.Select(p => p.Id).ToArray());
+						}
+						Logs.logger.Debug("Выход из метода GetLatestPosts");
+						return posts;
+					}
+				}
+			}
+		}
+
+		public List<Post> FindPostsByHashtag(string hashtag)
+		{
+			Logs.logger.Debug("Старт метода FindPostsByHashtag с hashtag = {0}", hashtag);
+			var posts = new List<Post>();
+
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
+
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на посты с хэштегом {0} в базу данных", hashtag);
+					command.CommandText = @"SELECT posts.id, photo, posts.date, posts.user_id FROM posts JOIN hashtags_posts ON posts.id = hashtags_posts.post_id
                                             JOIN hashtags ON hashtags_posts.hashtag_id = hashtags.id WHERE text = @text ORDER BY posts.date DESC";
-                    command.Parameters.AddWithValue("@text", hashtag);
+					command.Parameters.AddWithValue("@text", hashtag);
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        Logs.logger.Debug("В цикле считываем посты");
-                        while (reader.Read())
-                        {
-                            List<string> hashtags = GetHashtags(reader.GetGuid(0));
-                            Logs.logger.Info("Пост c хэштегом {3} получен: id = {0}, date = {1}, userId = {2}", reader.GetGuid(0), reader.GetDateTime(2), reader.GetGuid(3), hashtag);
-                            posts.Add(new Post
-                            {
-                                Id = reader.GetGuid(0),
-                                Photo = (byte[])reader["photo"],
-                                Date = reader.GetDateTime(2),
-                                UserId = reader.GetGuid(3),
-                                Hashtags = hashtags
-                            });
-                        }
-                        Logs.logger.Debug("Выход из метода FindPostsByHashtag");
-                        return posts;
-                    }
-                }
-            }
-        }
+					using (var reader = command.ExecuteReader())
+					{
+						Logs.logger.Debug("В цикле считываем посты");
+						while (reader.Read())
+						{
+							List<string> hashtags = GetHashtags(reader.GetGuid(0));
+							Logs.logger.Info("Пост c хэштегом {3} получен: id = {0}, date = {1}, userId = {2}", reader.GetGuid(0), reader.GetDateTime(2), reader.GetGuid(3), hashtag);
+							posts.Add(new Post
+							{
+								Id = reader.GetGuid(0),
+								Photo = (byte[])reader["photo"],
+								Date = reader.GetDateTime(2),
+								UserId = reader.GetGuid(3),
+								Hashtags = hashtags
+							});
+						}
+						Logs.logger.Debug("Выход из метода FindPostsByHashtag");
+						return posts;
+					}
+				}
+			}
+		}
 
-        public void AddLikeToPost(Guid userId, Guid postId)
-        {
-            Logs.logger.Debug("Старт метода AddLikeToPost с userId = {0} и postId = {1}", userId, postId);
-            Logs.logger.Debug("Проверяем наличе пользователя в системе");
-            GetUser(userId);
-            Logs.logger.Debug("Проверяем наличе поста в системе");
-            GetPost(postId);
+		public void AddLikeToPost(Guid userId, Guid postId)
+		{
+			Logs.logger.Debug("Старт метода AddLikeToPost с userId = {0} и postId = {1}", userId, postId);
+			Logs.logger.Debug("Проверяем наличе пользователя в системе");
+			GetUser(userId);
+			Logs.logger.Debug("Проверяем наличе поста в системе");
+			GetPost(postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Проверяем нет ли уже такого лайка в системе");
-                    Logs.logger.Debug("Делаем SELECT запрос на лайк");
-                    command.CommandText = @"SELECT * FROM likes WHERE user_id = @user_id AND post_id = @post_id";
-                    command.Parameters.AddWithValue("@user_id", userId);
-                    command.Parameters.AddWithValue("@post_id", postId);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            Logs.logger.Error("Лайк от пользователя с id = {0} к посту с id = {1} уже есть в системе", userId, postId);
-                            throw new ArgumentException("This like already exists");
-                        }
-                        Logs.logger.Debug("Такого лайка нет");
-                    }
-                    Logs.logger.Debug("Делаем запрос на добавление лайка в систему");
-                    command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user2_id, @post2_id)";
-                    command.Parameters.AddWithValue("@user2_id", userId);
-                    command.Parameters.AddWithValue("@post2_id", postId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Лайк добавлен: userId = {0}, postId = {1}", userId, postId);
-                    Logs.logger.Debug("Выход из метода AddLikeToPost");
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Проверяем нет ли уже такого лайка в системе");
+					Logs.logger.Debug("Делаем SELECT запрос на лайк");
+					command.CommandText = @"SELECT * FROM likes WHERE user_id = @user_id AND post_id = @post_id";
+					command.Parameters.AddWithValue("@user_id", userId);
+					command.Parameters.AddWithValue("@post_id", postId);
+					using (var reader = command.ExecuteReader())
+					{
+						if (reader.Read())
+						{
+							Logs.logger.Error("Лайк от пользователя с id = {0} к посту с id = {1} уже есть в системе", userId, postId);
+							throw new ArgumentException("This like already exists");
+						}
+						Logs.logger.Debug("Такого лайка нет");
+					}
+					Logs.logger.Debug("Делаем запрос на добавление лайка в систему");
+					command.CommandText = "INSERT INTO likes (user_id, post_id) VALUES (@user2_id, @post2_id)";
+					command.Parameters.AddWithValue("@user2_id", userId);
+					command.Parameters.AddWithValue("@post2_id", postId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Лайк добавлен: userId = {0}, postId = {1}", userId, postId);
+					Logs.logger.Debug("Выход из метода AddLikeToPost");
+				}
+			}
+		}
 
-        public List<User> GetPostLikes(Guid postId)
-        {
-            Logs.logger.Debug("Старт метода GetPostLikes с postId = {0}", postId);
-            Logs.logger.Debug("Проверяем наличе поста в системе");
-            GetPost(postId);
+		public List<User> GetPostLikes(Guid postId)
+		{
+			Logs.logger.Debug("Старт метода GetPostLikes с postId = {0}", postId);
+			Logs.logger.Debug("Проверяем наличе поста в системе");
+			GetPost(postId);
 
-            var users = new List<User>();
+			var users = new List<User>();
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на лайки поста с id = {0}", postId);
-                    command.CommandText = "SELECT id, login, password FROM users JOIN likes ON users.id = likes.user_id WHERE post_id = @id;";
-                    command.Parameters.AddWithValue("@id", postId);
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на лайки поста с id = {0}", postId);
+					command.CommandText = "SELECT id, login, password FROM users JOIN likes ON users.id = likes.user_id WHERE post_id = @id;";
+					command.Parameters.AddWithValue("@id", postId);
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Logs.logger.Debug("В цикле считываем лайки");
-                            Logs.logger.Info("Лайк поста с id = {0} получен: userId = {1}, login = {2}", postId, reader.GetGuid(0), reader.GetString(1));
-                            users.Add(new User
-                            {
-                                Id = reader.GetGuid(0),
-                                Login = reader.GetString(1),
-                                Password = reader.GetString(2)
-                            });
-                        }
-                        Logs.logger.Debug("Выход из метода GetPostLikes");
-                        return users;
-                    }
-                }
-            }
-        }
-        public void DeleteLikeFromPost(Guid userId, Guid postId)
-        {
-            Logs.logger.Debug("Старт метода DeleteLikeFromPost с userId = {0} и postId = {1}", userId, postId);
-            Logs.logger.Debug("Проверяем наличе пользователя в системе");
-            GetUser(userId);
-            Logs.logger.Debug("Проверяем наличе поста в системе");
-            GetPost(postId);
+					using (var reader = command.ExecuteReader())
+					{
+						while (reader.Read())
+						{
+							Logs.logger.Debug("В цикле считываем лайки");
+							Logs.logger.Info("Лайк поста с id = {0} получен: userId = {1}, login = {2}", postId, reader.GetGuid(0), reader.GetString(1));
+							users.Add(new User
+							{
+								Id = reader.GetGuid(0),
+								Login = reader.GetString(1),
+								Password = reader.GetString(2)
+							});
+						}
+						Logs.logger.Debug("Выход из метода GetPostLikes");
+						return users;
+					}
+				}
+			}
+		}
+		public void DeleteLikeFromPost(Guid userId, Guid postId)
+		{
+			Logs.logger.Debug("Старт метода DeleteLikeFromPost с userId = {0} и postId = {1}", userId, postId);
+			Logs.logger.Debug("Проверяем наличе пользователя в системе");
+			GetUser(userId);
+			Logs.logger.Debug("Проверяем наличе поста в системе");
+			GetPost(postId);
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем запрос на удаление лайка пользователя с id = {0} к посту с id = {1} в базу данных", userId, postId);
-                    command.CommandText = @"DELETE FROM likes WHERE post_id = @post_id AND user_id = @user_id;";
-                    command.Parameters.AddWithValue("@post_id", postId);
-                    command.Parameters.AddWithValue("@user_id", userId);
-                    command.ExecuteNonQuery();
-                    Logs.logger.Info("Лайк от пользователя с id = {0} к посту с id = {1} удален", userId, postId);
-                    Logs.logger.Debug("Выход из метода DeleteLikeFromPost");
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем запрос на удаление лайка пользователя с id = {0} к посту с id = {1} в базу данных", userId, postId);
+					command.CommandText = @"DELETE FROM likes WHERE post_id = @post_id AND user_id = @user_id;";
+					command.Parameters.AddWithValue("@post_id", postId);
+					command.Parameters.AddWithValue("@user_id", userId);
+					command.ExecuteNonQuery();
+					Logs.logger.Info("Лайк от пользователя с id = {0} к посту с id = {1} удален", userId, postId);
+					Logs.logger.Debug("Выход из метода DeleteLikeFromPost");
+				}
+			}
+		}
 
-        private void AddHashtagsToPost(Post post)
-        {
-            Logs.logger.Debug("Старт метода AddHashtagsToPost");
-            bool hashtagExist = false;
-            Guid id = Guid.NewGuid();
+		private void AddHashtagsToPost(Post post)
+		{
+			Logs.logger.Debug("Старт метода AddHashtagsToPost");
+			bool hashtagExist = false;
+			var id = Guid.NewGuid();
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			_cacheProvider.AddSet(Scheme.Hashtags(post.Id), post.Hashtags);
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("В цикле обрабатываем хэштеги");
-                    for (int counter = 0; counter < post.Hashtags.Count; counter++)
-                    {
-                        Logs.logger.Debug("Отправляем SELECT запрос по хэштегу с текстом {0} в базу данных", post.Hashtags[counter]);
-                        command.CommandText = string.Format("SELECT id FROM hashtags WHERE text = @hashtag{0};", counter);
-                        command.Parameters.AddWithValue(string.Format("@hashtag{0}", counter), post.Hashtags[counter]);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                Logs.logger.Debug("Хэштег {0} содержится в системе, его id = {1}", post.Hashtags[counter], reader.GetGuid(0));
-                                hashtagExist = true;
-                                id = reader.GetGuid(0);
-                            }
-                            Logs.logger.Debug("Хэштега {0} в системе нет", post.Hashtags[counter]);
-                        }
-                        if (hashtagExist)
-                        {
-                            hashtagExist = false;
-                            Logs.logger.Debug("Отправляем запрос на добавление привязки поста с id = {0} к хэштегу с текстом {1} в базу данных", post.Id, post.Hashtags[counter]);
-                            command.CommandText = string.Format(@"INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id{0}, @post_id{0});", counter);
-                            command.Parameters.AddWithValue(string.Format("@hashtag_id{0}", counter), id);
-                            command.Parameters.AddWithValue(string.Format("@post_id{0}", counter), post.Id);
-                            command.ExecuteNonQuery();
-                            Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);
-                        }
-                        else
-                        {
-                            Guid newId = Guid.NewGuid();
-                            Logs.logger.Debug("Начинаем транзакцию на добавление хэштега {0} в систему и привязку его к посту с id = {1} в базе данных", post.Hashtags[counter], post.Id);
-                            command.CommandText = string.Format(@"BEGIN TRANSACTION
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("В цикле обрабатываем хэштеги");
+					for (int counter = 0; counter < post.Hashtags.Count; counter++)
+					{
+						Logs.logger.Debug("Отправляем SELECT запрос по хэштегу с текстом {0} в базу данных", post.Hashtags[counter]);
+						command.CommandText = $"SELECT id FROM hashtags WHERE text = @hashtag{counter};";
+						command.Parameters.AddWithValue($"@hashtag{counter}", post.Hashtags[counter]);
+
+						using (var reader = command.ExecuteReader())
+						{
+							if (reader.Read())
+							{
+								Logs.logger.Debug("Хэштег {0} содержится в системе, его id = {1}", post.Hashtags[counter], reader.GetGuid(0));
+								hashtagExist = true;
+								id = reader.GetGuid(0);
+							}
+							Logs.logger.Debug("Хэштега {0} в системе нет", post.Hashtags[counter]);
+						}
+						if (hashtagExist)
+						{
+							hashtagExist = false;
+							Logs.logger.Debug("Отправляем запрос на добавление привязки поста с id = {0} к хэштегу с текстом {1} в базу данных", post.Id, post.Hashtags[counter]);
+							command.CommandText = string.Format(@"INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id{0}, @post_id{0});", counter);
+							command.Parameters.AddWithValue($"@hashtag_id{counter}", id);
+							command.Parameters.AddWithValue($"@post_id{counter}", post.Id);
+							command.ExecuteNonQuery();
+							Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);
+						}
+						else
+						{
+							Guid newId = Guid.NewGuid();
+							Logs.logger.Debug("Начинаем транзакцию на добавление хэштега {0} в систему и привязку его к посту с id = {1} в базе данных", post.Hashtags[counter], post.Id);
+							command.CommandText = string.Format(@"BEGIN TRANSACTION
                                                     INSERT INTO hashtags (id, text) VALUES (@hashtag_id{0}, @text{0})
                                                     INSERT INTO hashtags_posts (hashtag_id, post_id) VALUES (@hashtag_id{0}, @post_id{0})
                                                 COMMIT", counter);
-                            command.Parameters.AddWithValue(string.Format("@hashtag_id{0}", counter), newId);
-                            command.Parameters.AddWithValue(string.Format("@text{0}", counter), post.Hashtags[counter]);
-                            command.Parameters.AddWithValue(string.Format("@post_id{0}", counter), post.Id);
-                            command.ExecuteNonQuery();
-                            Logs.logger.Info("Хэштег добавлен в систему: id = {0}, text = {1}", newId, post.Hashtags[counter]);
-                            Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);
-                        }
-                    }
-                }
-            }
-            Logs.logger.Debug("Выход из метода AddHashtagsToPost");
-        }
+							command.Parameters.AddWithValue($"@hashtag_id{counter}", newId);
+							command.Parameters.AddWithValue($"@text{counter}", post.Hashtags[counter]);
+							command.Parameters.AddWithValue($"@post_id{counter}", post.Id);
+							command.ExecuteNonQuery();
+							Logs.logger.Info("Хэштег добавлен в систему: id = {0}, text = {1}", newId, post.Hashtags[counter]);
+							Logs.logger.Info("Хэштег {0} добавлен к посту с id = {1}", post.Hashtags[counter], post.Id);
+						}
+					}
+				}
+			}
+			Logs.logger.Debug("Выход из метода AddHashtagsToPost");
+		}
 
-        private List<string> GetHashtags(Guid postId)
-        {
-            Logs.logger.Debug("Старт метода GetHashtags с postId = {0}", postId);
-            var hashtags = new List<string>();
+		private List<string> GetHashtags(Guid postId)
+		{
+			Logs.logger.Debug("Старт метода GetHashtags с postId = {0}", postId);
+			var hashtags = new List<string>();
 
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+			if (_cacheProvider.TryGetSet(Scheme.Hashtags(postId), out List<string> cachedHashtags))
+				return cachedHashtags;
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на хэштэги, привязанные к посту с id = {0}", postId);
-                    command.CommandText = "SELECT text FROM hashtags JOIN hashtags_posts ON hashtags.id = hashtags_posts.hashtag_id WHERE post_id = @id;";
-                    command.Parameters.AddWithValue("@id", postId);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        Logs.logger.Debug("В цикле считываем хэштеги");
-                        while (reader.Read())
-                        {
-                            Logs.logger.Debug("Хэштег {0} получен", reader.GetString(0));
-                            hashtags.Add(reader.GetString(0));
-                        }
-                        Logs.logger.Debug("Выход из метода GetHashtags");
-                        return hashtags;
-                    }
-                }
-            }
-        }
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на хэштэги, привязанные к посту с id = {0}", postId);
+					command.CommandText = "SELECT text FROM hashtags JOIN hashtags_posts ON hashtags.id = hashtags_posts.hashtag_id WHERE post_id = @id;";
+					command.Parameters.AddWithValue("@id", postId);
 
-        private bool UserWithLoginExist(string login)
-        {
-            Logs.logger.Debug("Старт метода UserWithLoginExist, проверяющего существует ли уже в системе пользователь с логином {0}", login);
-            Logs.logger.Debug("Открываем подключение к базе данных");
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
+					using (var reader = command.ExecuteReader())
+					{
+						Logs.logger.Debug("В цикле считываем хэштеги");
+						while (reader.Read())
+						{
+							Logs.logger.Debug("Хэштег {0} получен", reader.GetString(0));
+							hashtags.Add(reader.GetString(0));
+						}
 
-                using (var command = connection.CreateCommand())
-                {
-                    Logs.logger.Debug("Делаем SELECT запрос на пользователя в базу данных");
-                    command.CommandText = "SELECT id, login, password FROM users WHERE login = @login";
-                    command.Parameters.AddWithValue("@login", login);
+						_cacheProvider.AddSet(Scheme.Hashtags(postId), hashtags);
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            Logs.logger.Debug("Пользователь с логином {0} существует в системе. Выход из метода UserWithLoginExist", login);
-                            return true;
-                        }
-                        else
-                        {
-                            Logs.logger.Debug("Пользователя с логином {0} в системе нет. Выход из метода UserWithLoginExist", login);
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-    }
+						Logs.logger.Debug("Выход из метода GetHashtags");
+						return hashtags;
+					}
+				}
+			}
+		}
+
+		private bool UserWithLoginExist(string login)
+		{
+			Logs.logger.Debug("Старт метода UserWithLoginExist, проверяющего существует ли уже в системе пользователь с логином {0}", login);
+			Logs.logger.Debug("Открываем подключение к базе данных");
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				connection.Open();
+
+				using (var command = connection.CreateCommand())
+				{
+					Logs.logger.Debug("Делаем SELECT запрос на пользователя в базу данных");
+					command.CommandText = "SELECT id, login, password FROM users WHERE login = @login";
+					command.Parameters.AddWithValue("@login", login);
+
+					using (var reader = command.ExecuteReader())
+					{
+						if (reader.Read())
+						{
+							Logs.logger.Debug("Пользователь с логином {0} существует в системе. Выход из метода UserWithLoginExist", login);
+							return true;
+						}
+						else
+						{
+							Logs.logger.Debug("Пользователя с логином {0} в системе нет. Выход из метода UserWithLoginExist", login);
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
 }
